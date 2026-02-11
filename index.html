@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Firebase Test</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
+        input, button { padding: 10px; font-size: 1rem; }
+        ul { list-style: none; padding: 0; }
+        li { background: #f0f0f0; margin: 5px 0; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Guestbook ✍️</h1>
+    
+    <input type="text" id="messageInput" placeholder="Type a message...">
+    <button id="sendBtn">Send to Database</button>
+
+    <h3>Messages from Database:</h3>
+    <ul id="messageList">Loading...</ul>
+
+    <script type="module">
+        // 1. Import the functions we need from the SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyBprGqy0WYVzIrL8XR163kWb2EcGm9ns-s",
+            authDomain: "roadmap-tej2o-1.firebaseapp.com",
+            projectId: "roadmap-tej2o-1",
+            storageBucket: "roadmap-tej2o-1.firebasestorage.app",
+            messagingSenderId: "655591889925",
+            appId: "1:655591889925:web:b356cde80a5c087a26506c",
+            measurementId: "G-D5NK61R1X6"
+        };
+
+        // 3. Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // 4. Function to Write Data
+        document.getElementById('sendBtn').addEventListener('click', async () => {
+            const input = document.getElementById('messageInput');
+            const messageText = input.value;
+            
+            if(messageText) {
+                try {
+                    await addDoc(collection(db, "messages"), {
+                        text: messageText,
+                        timestamp: new Date()
+                    });
+                    input.value = ""; // Clear input
+                    console.log("Message saved!");
+                } catch (e) {
+                    console.error("Error adding document: ", e);
+                    alert("Error! Check console.");
+                }
+            }
+        });
+
+        // 5. Function to Read Data (Real-time!)
+        const list = document.getElementById('messageList');
+        
+        // This 'onSnapshot' function runs automatically whenever the database changes
+        onSnapshot(collection(db, "messages"), (querySnapshot) => {
+            list.innerHTML = ""; // Clear current list
+            querySnapshot.forEach((doc) => {
+                const li = document.createElement('li');
+                li.textContent = doc.data().text;
+                list.appendChild(li);
+            });
+            if(querySnapshot.empty) {
+                list.innerHTML = "No messages yet.";
+            }
+        });
+    </script>
+</body>
+</html>

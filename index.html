@@ -11,21 +11,32 @@
     </style>
 </head>
 <body>
-    <h1>Guestbook ✍️</h1>
-    
-    <input type="text" id="messageInput" placeholder="Type a message...">
-    <button id="sendBtn">Send to Database</button>
+    <h1>Class Guestbook 🎓</h1>
 
-    <h3>Messages from Database:</h3>
+    <div id="loginSection">
+        <button id="loginBtn" style="background-color: #4285F4; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+            Sign in with Google
+        </button>
+    </div>
+
+    <div id="appSection" style="display:none;">
+        <p>Welcome, <span id="userName" style="font-weight:bold;">Student</span>!</p>
+        <img id="userPhoto" src="" style="width: 30px; border-radius: 50%; vertical-align: middle; margin-right: 10px;">
+        <button id="logoutBtn">Sign Out</button>
+        <hr>
+        <input type="text" id="messageInput" placeholder="Type a message...">
+        <button id="sendBtn">Post Message</button>
+    </div>
+
+    <h3>Class Messages:</h3>
     <ul id="messageList">Loading...</ul>
 
     <script type="module">
-        // 1. Import the functions we need from the SDK
+        // Import Authentication functions along with Firestore
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // Your web app's Firebase configuration
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
         const firebaseConfig = {
             apiKey: "AIzaSyBprGqy0WYVzIrL8XR163kWb2EcGm9ns-s",
             authDomain: "roadmap-tej2o-1.firebaseapp.com",
@@ -36,44 +47,83 @@
             measurementId: "G-D5NK61R1X6"
         };
 
-        // 3. Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app); // Initialize Auth
+        const provider = new GoogleAuthProvider(); // Setup Google Login
 
-        // 4. Function to Write Data
+        // --- LOGIN LOGIC ---
+        const loginBtn = document.getElementById('loginBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const loginSection = document.getElementById('loginSection');
+        const appSection = document.getElementById('appSection');
+        const userNameSpan = document.getElementById('userName');
+        const userPhotoImg = document.getElementById('userPhoto');
+
+        // 1. Handle Login Button Click
+        loginBtn.addEventListener('click', () => {
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    console.log("Logged in!", result.user);
+                }).catch((error) => {
+                    console.error("Login failed", error);
+                    alert("Login failed: " + error.message);
+                });
+        });
+
+        // 2. Handle Logout
+        logoutBtn.addEventListener('click', () => signOut(auth));
+
+        // 3. Monitor Login State (Runs automatically when page loads)
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User is signed in
+                loginSection.style.display = 'none';
+                appSection.style.display = 'block';
+                userNameSpan.textContent = user.displayName; // Their Google Name
+                userPhotoImg.src = user.photoURL; // Their Google Profile Pic
+            } else {
+                // User is signed out
+                loginSection.style.display = 'block';
+                appSection.style.display = 'none';
+            }
+        });
+
+        // --- DATABASE LOGIC (Updated to save name) ---
         document.getElementById('sendBtn').addEventListener('click', async () => {
             const input = document.getElementById('messageInput');
             const messageText = input.value;
-            
-            if(messageText) {
+            const user = auth.currentUser; // Get the currently logged-in user
+
+            if(messageText && user) {
                 try {
                     await addDoc(collection(db, "messages"), {
                         text: messageText,
+                        name: user.displayName, // Save their name!
+                        email: user.email,      // Save their email!
+                        uid: user.uid,          // Save their unique ID
                         timestamp: new Date()
                     });
-                    input.value = ""; // Clear input
-                    console.log("Message saved!");
+                    input.value = ""; 
                 } catch (e) {
                     console.error("Error adding document: ", e);
-                    alert("Error! Check console.");
                 }
             }
         });
 
-        // 5. Function to Read Data (Real-time!)
+        // Read Data (Same as before, but let's show the name too)
         const list = document.getElementById('messageList');
+        const q = query(collection(db, "messages"), orderBy("timestamp", "desc"));
         
-        // This 'onSnapshot' function runs automatically whenever the database changes
-        onSnapshot(collection(db, "messages"), (querySnapshot) => {
-            list.innerHTML = ""; // Clear current list
-            querySnapshot.forEach((doc) => {
+        onSnapshot(q, (snapshot) => {
+            list.innerHTML = "";
+            snapshot.forEach((doc) => {
+                const data = doc.data();
                 const li = document.createElement('li');
-                li.textContent = doc.data().text;
+                // Display: "Name: Message"
+                li.innerHTML = `<strong>${data.name || 'Anonymous'}</strong>: ${data.text}`;
                 list.appendChild(li);
             });
-            if(querySnapshot.empty) {
-                list.innerHTML = "No messages yet.";
-            }
         });
     </script>
 </body>

@@ -1,0 +1,119 @@
+/* Reset default browser spacing */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* Prevent scrolling, everything fits in view */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f2f5;
+}
+
+/* UI Layer - Floats above canvas */
+#ui-layer {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 10; /* Above canvas */
+    pointer-events: none; /* Let clicks pass through to the canvas */
+    background: rgba(255, 255, 255, 0.8);
+    padding: 10px 20px;
+    border-radius: 8px;
+    backdrop-filter: blur(5px);
+}
+
+h1 { color: #333; font-size: 24px; margin-bottom: 5px; }
+p.subtitle { color: #666; font-size: 14px; }
+
+/* Container is now full screen */
+#canvas-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    /* Subtle grid pattern background */
+    background-color: #ffffff;
+    background-image: radial-gradient(#ccc 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+/* Popup Card */
+#popup {
+    position: absolute;
+    display: none;
+    width: 280px;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    border-left: 6px solid #333;
+    z-index: 100;
+    pointer-events: auto; 
+}
+
+/* Arrow Logic (Simplified for full screen usage) */
+#popup::after {
+    content: "";
+    position: absolute;
+    /* We will manipulate this in JS if needed, or keep generic */
+    display: none; 
+}
+
+#popup h3 { margin: 0 0 8px 0; font-size: 18px; color: #222; }
+#popup p { margin: 0 0 12px 0; font-size: 14px; color: #555; line-height: 1.4; }
+#popup .meta { font-size: 11px; color: #888; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+
+.action-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: bold;
+}
+.action-btn:hover { background-color: #0056b3; }
+
+.close-btn {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    cursor: pointer;
+    font-size: 20px;
+    color: #999;
+}
+.close-btn:hover { color: #333; }
+
+/* --- Add this to the bottom of style.css --- */
+
+/* Base Arrow Styling */
+#popup::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    border-style: solid;
+    display: block; /* Ensure it renders */
+}
+
+#popup.arrow-bottom::after {
+    top: 100%; 
+    border-width: 10px 10px 0 10px; /* Top filled, others transparent */
+    border-color: #fff transparent transparent transparent;
+}
+
+#popup.arrow-top::after {
+    bottom: 100%;
+    border-width: 0 10px 10px 10px; /* Bottom filled, others transparent */
+    border-color: transparent transparent #fff transparent;
+}

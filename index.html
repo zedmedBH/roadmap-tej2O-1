@@ -2,129 +2,285 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Firebase Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic VEX Roadmap</title>
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
-        input, button { padding: 10px; font-size: 1rem; }
-        ul { list-style: none; padding: 0; }
-        li { background: #f0f0f0; margin: 5px 0; padding: 10px; border-radius: 4px; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        h1 { color: #333; margin-bottom: 10px; }
+
+        /* Container for the canvas and the tooltip */
+        #canvas-container {
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            background: white;
+        }
+
+        canvas {
+            display: block;
+            background: radial-gradient(circle, #ffffff 0%, #f0f0f0 100%);
+            cursor: crosshair;
+        }
+
+        /* The Hover Tooltip Card */
+        #tooltip {
+            position: absolute;
+            display: none; /* Hidden by default */
+            width: 220px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border-left: 5px solid #333;
+            pointer-events: none; /* Allows mouse to pass through to canvas */
+            z-index: 10;
+            transition: opacity 0.2s;
+        }
+
+        #tooltip h3 { margin: 0 0 5px 0; font-size: 16px; color: #222; }
+        #tooltip p { margin: 0; font-size: 13px; color: #555; }
+        #tooltip .meta { font-size: 11px; color: #888; margin-top: 5px; font-weight: bold; }
+        #tooltip .hint { margin-top: 8px; font-size: 11px; color: #007bff; }
+
     </style>
 </head>
 <body>
-    <h1>Class Guestbook 🎓</h1>
 
-    <div id="loginSection">
-        <button id="loginBtn" style="background-color: #4285F4; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
-            Sign in with Google
-        </button>
+    <h1>VEX Stack Build Roadmap</h1>
+    <p>Hover for details. Click to open lesson.</p>
+
+    <div id="canvas-container">
+        <canvas id="roadmapCanvas" width="1000" height="400"></canvas>
+        <div id="tooltip"></div>
     </div>
 
-    <div id="appSection" style="display:none;">
-        <p>Welcome, <span id="userName" style="font-weight:bold;">Student</span>!</p>
-        <img id="userPhoto" src="" style="width: 30px; border-radius: 50%; vertical-align: middle; margin-right: 10px;">
-        <button id="logoutBtn">Sign Out</button>
-        <hr>
-        <input type="text" id="messageInput" placeholder="Type a message...">
-        <button id="sendBtn">Post Message</button>
-    </div>
+<script>
+    // ==========================================
+    // 1. CONFIGURATION (EDIT THIS DATA!)
+    // ==========================================
+    // Add as many checkpoints as you want here. The road will stretch to fit.
+    const checkpoints = [
+        { 
+            title: "1. Holonomic Drivetrain", 
+            pages: "Pages 4-22", 
+            qc: "Check X-pattern on wheels",
+            color: "#00C853", // Green
+            url: "https://www.youtube.com/user/vexrobotics" 
+        },
+        { 
+            title: "2. Towers & Brain", 
+            pages: "Pages 23-31", 
+            qc: "Ensure towers parallel",
+            color: "#FF3D00", // Red
+            url: "#" 
+        },
+        { 
+            title: "3. Lift Assembly", 
+            pages: "Pages 32-49", 
+            qc: "Friction & Symmetry check",
+            color: "#00C853", 
+            url: "#" 
+        },
+        { 
+            title: "4. Intake Mechanism", 
+            pages: "Pages 50-65", 
+            qc: "Chain tension check",
+            color: "#FF3D00", 
+            url: "#" 
+        },
+        { 
+            title: "5. Final Integration", 
+            pages: "Pages 66-71", 
+            qc: "Cable management check",
+            color: "#00C853", 
+            url: "#" 
+        },
+        // EXAMPLE: Uncomment the object below to instantly add a 6th stage!
+        /*
+        { 
+            title: "6. Competition Prep", 
+            pages: "Post-Build", 
+            qc: "Battery & Firmware",
+            color: "#2962FF", 
+            url: "#" 
+        } 
+        */
+    ];
 
-    <h3>Class Messages:</h3>
-    <ul id="messageList">Loading...</ul>
+    // ==========================================
+    // 2. THE ENGINE (Drawing Logic)
+    // ==========================================
+    const canvas = document.getElementById('roadmapCanvas');
+    const ctx = canvas.getContext('2d');
+    const tooltip = document.getElementById('tooltip');
+    
+    // Store calculated node positions here for click detection
+    let nodePositions = []; 
 
-    <script type="module">
-        // Import Authentication functions along with Firestore
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    function drawRoadmap() {
+        const width = canvas.width;
+        const height = canvas.height;
+        const padX = 80;  // Padding sides
+        const amplitude = 60; // How "wavy" the road is
+        const centerY = height / 2;
+        
+        ctx.clearRect(0, 0, width, height);
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBprGqy0WYVzIrL8XR163kWb2EcGm9ns-s",
-            authDomain: "roadmap-tej2o-1.firebaseapp.com",
-            projectId: "roadmap-tej2o-1",
-            storageBucket: "roadmap-tej2o-1.firebasestorage.app",
-            messagingSenderId: "655591889925",
-            appId: "1:655591889925:web:b356cde80a5c087a26506c",
-            measurementId: "G-D5NK61R1X6"
-        };
+        // -- A. Draw the Road (The Wavy Line) --
+        ctx.beginPath();
+        ctx.lineWidth = 40;
+        ctx.strokeStyle = '#555'; // Road color
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app); // Initialize Auth
-        const provider = new GoogleAuthProvider(); // Setup Google Login
+        // We draw points along a sine wave
+        for (let x = padX; x <= width - padX; x++) {
+            // Normalize x to 0-1 range for math
+            const progress = (x - padX) / (width - padX * 2);
+            // Math.sin creates the wave. (progress * Math.PI * 3) creates 1.5 cycles
+            const y = centerY + Math.sin(progress * Math.PI * 3) * amplitude;
+            
+            if (x === padX) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
 
-        // --- LOGIN LOGIC ---
-        const loginBtn = document.getElementById('loginBtn');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const loginSection = document.getElementById('loginSection');
-        const appSection = document.getElementById('appSection');
-        const userNameSpan = document.getElementById('userName');
-        const userPhotoImg = document.getElementById('userPhoto');
+        // -- B. Draw Center Strip (Dashed Line) --
+        ctx.beginPath();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#fff';
+        ctx.setLineDash([10, 10]);
+        for (let x = padX; x <= width - padX; x++) {
+            const progress = (x - padX) / (width - padX * 2);
+            const y = centerY + Math.sin(progress * Math.PI * 3) * amplitude;
+            if (x === padX) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]); // Reset dash
 
-        // 1. Handle Login Button Click
-        loginBtn.addEventListener('click', () => {
-            signInWithPopup(auth, provider)
-                .then((result) => {
-                    console.log("Logged in!", result.user);
-                }).catch((error) => {
-                    console.error("Login failed", error);
-                    alert("Login failed: " + error.message);
-                });
+        // -- C. Draw Checkpoints --
+        nodePositions = []; // Reset stored positions
+
+        const totalPoints = checkpoints.length;
+        
+        checkpoints.forEach((point, index) => {
+            // Calculate X/Y for this specific node
+            // We distribute them evenly across the width
+            const progress = index / (totalPoints - 1);
+            
+            // Map progress (0 to 1) to the canvas width (padX to width-padX)
+            const x = padX + progress * (width - padX * 2);
+            const y = centerY + Math.sin(progress * Math.PI * 3) * amplitude;
+
+            // Save for hit testing
+            nodePositions.push({ x, y, data: point, radius: 25 });
+
+            // Draw Shadow
+            ctx.beginPath();
+            ctx.arc(x, y + 5, 25, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fill();
+
+            // Draw Circle Background
+            ctx.beginPath();
+            ctx.arc(x, y, 25, 0, Math.PI * 2);
+            ctx.fillStyle = point.color;
+            ctx.fill();
+
+            // Draw Circle Border
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = 'white';
+            ctx.stroke();
+
+            // Draw Number
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 18px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(index + 1, x, y);
+            
+            // Draw Title Label below node
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText(point.title, x, y + 45);
         });
+    }
 
-        // 2. Handle Logout
-        logoutBtn.addEventListener('click', () => signOut(auth));
+    // ==========================================
+    // 3. INTERACTION (Events)
+    // ==========================================
+    
+    // Mouse Move: Check for hovering over nodes
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
 
-        // 3. Monitor Login State (Runs automatically when page loads)
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                // User is signed in
-                loginSection.style.display = 'none';
-                appSection.style.display = 'block';
-                userNameSpan.textContent = user.displayName; // Their Google Name
-                userPhotoImg.src = user.photoURL; // Their Google Profile Pic
-            } else {
-                // User is signed out
-                loginSection.style.display = 'block';
-                appSection.style.display = 'none';
+        let hit = false;
+
+        nodePositions.forEach(node => {
+            // Calculate distance between mouse and node center
+            const dist = Math.sqrt((mouseX - node.x) ** 2 + (mouseY - node.y) ** 2);
+
+            if (dist < node.radius) {
+                hit = true;
+                
+                // Show Tooltip
+                tooltip.style.display = 'block';
+                tooltip.style.left = (node.x + 20) + 'px'; // Offset slightly
+                tooltip.style.top = (node.y - 80) + 'px';
+                tooltip.style.borderColor = node.data.color;
+                
+                // Inject HTML Content
+                tooltip.innerHTML = `
+                    <h3>${node.data.title}</h3>
+                    <p class="meta">${node.data.pages}</p>
+                    <p>QC: ${node.data.qc}</p>
+                    <p class="hint">Click to open resource &rarr;</p>
+                `;
+                
+                // Change cursor to pointer
+                canvas.style.cursor = 'pointer';
             }
         });
 
-        // --- DATABASE LOGIC (Updated to save name) ---
-        document.getElementById('sendBtn').addEventListener('click', async () => {
-            const input = document.getElementById('messageInput');
-            const messageText = input.value;
-            const user = auth.currentUser; // Get the currently logged-in user
+        if (!hit) {
+            tooltip.style.display = 'none';
+            canvas.style.cursor = 'default';
+        }
+    });
 
-            if(messageText && user) {
-                try {
-                    await addDoc(collection(db, "messages"), {
-                        text: messageText,
-                        name: user.displayName, // Save their name!
-                        email: user.email,      // Save their email!
-                        uid: user.uid,          // Save their unique ID
-                        timestamp: new Date()
-                    });
-                    input.value = ""; 
-                } catch (e) {
-                    console.error("Error adding document: ", e);
+    // Mouse Click: Open URL
+    canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        nodePositions.forEach(node => {
+            const dist = Math.sqrt((mouseX - node.x) ** 2 + (mouseY - node.y) ** 2);
+            if (dist < node.radius) {
+                if(node.data.url && node.data.url !== "#") {
+                    window.open(node.data.url, '_blank');
+                } else {
+                    alert("No link configured for this stage yet!");
                 }
             }
         });
+    });
 
-        // Read Data (Same as before, but let's show the name too)
-        const list = document.getElementById('messageList');
-        const q = query(collection(db, "messages"), orderBy("timestamp", "desc"));
-        
-        onSnapshot(q, (snapshot) => {
-            list.innerHTML = "";
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                const li = document.createElement('li');
-                // Display: "Name: Message"
-                li.innerHTML = `<strong>${data.name || 'Anonymous'}</strong>: ${data.text}`;
-                list.appendChild(li);
-            });
-        });
-    </script>
+    // Initial Draw
+    drawRoadmap();
+
+</script>
 </body>
 </html>

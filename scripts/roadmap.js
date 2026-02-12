@@ -32,44 +32,79 @@ const checkpoints = [
         subtitle: "Holonomic Drive",
         desc: "Build chassis frame, install motors, and attach mecanum wheels.",
         color: "#00C853", 
-        tasks: ["Build chassis frame", "Install 4 motors", "Attach mecanum wheels"],
-        resources: [{ label: "Drivetrain Guide", url: "#" }]
+        tasks: ["Build chassis frame", "Install 4 motors", "Attach mecanum wheels","QC: Check wheel X pattern & frame squareness."],
+        resources: [{ label: "Pages 4-23", url: "#" }]
     },
     { 
         phase: 2,
-        title: "Stage 2", 
-        subtitle: "Electronics",
-        desc: "Mount V5 Brain, battery clips, and ensure wiring is managed.",
-        color: "#00C853", 
-        tasks: ["Mount V5 Brain", "Wire motors"],
-        resources: [{ label: "Wiring Diagram", url: "#" }]
+        title: "Planning", 
+        subtitle: "Gantt Chart",
+        desc: "As a team, make a copy of the Gannt chart and assign the remaining tasks. Deadline May 1st.",
+        color: "#7269be", 
+        tasks: ["Complete Gantt Chart","Add link to Engineering Journal"],
+        resources: [{ label: "Video: Gantt Chart", url: "#" }]
     },
-    { 
+{ 
         phase: 3,
-        title: "Stage 3", 
-        subtitle: "Lift Assembly",
-        desc: "Construct lift arms and ensure symmetric height movement.",
+        title: "Testing 1", 
+        subtitle: "Drivetrain",
+        desc: "Watch the videos to an introduction to various tests.",
         color: "#FF3D00", 
-        tasks: ["Build lift arms", "Install lift motors"],
-        resources: [{ label: "PID Control", url: "#" }]
+        tasks: ["Connect Brain and Battery","Pairing Controller","Sample Drivetrain Code"],
+        resources: [{ label: "Video: Motor Wiring Diagram", url: "#" }, { label: "Video: Pairing Controller ", url: "#"}, { label: "Video: Github Repo", url: "#"} ]
     },
     { 
         phase: 4,
-        title: "Stage 4", 
-        subtitle: "Intake Mech",
-        desc: "Assemble intake chains and mount motors for object collection.",
+        title: "Stage 3", 
+        subtitle: "Support Motor",
+        desc: "Assemble and install the support motor mechanism.",
+        color: "#00C853", 
+        tasks: ["Build mechanism","Install"],
+        resources: [{ label: "Pages 24-31", url: "#" }]
+    },
+	{ 
+        phase: 5,
+        title: "Testing 2", 
+        subtitle: "Code motor limits",
+        desc: "Modify code to incorporate new motor. Determine stopping limits to minimize motor wear.",
         color: "#FF3D00", 
-        tasks: ["Assemble chains", "Mount intake"],
-        resources: [{ label: "Tension Guide", url: "#" }]
+        tasks: ["Update Code"],
+        resources: [{ label: "Video: Motor Limits", url: "#" }]
     },
     { 
-        phase: 5,
+        phase: 6,
+        title: "Stage 4", 
+        subtitle: "Top Lift Motor & Misc.",
+        desc: "Assemble intake chains for drivetrain. Install the top lift motor.",
+        color: "#00C853", 
+        tasks: ["Assemble drivetrain chains", "Mount top lift motor"],
+        resources: [{ label: "Pages 32-49", url: "#" }]
+    },
+	{ 
+        phase: 7,
         title: "Stage 5", 
-        subtitle: "Integration",
-        desc: "Final cable management, battery checks, and driver practice.",
+        subtitle: "Lift Assembly",
+        desc: "Construct lift arms and ensure symmetric height movement.",
+        color: "#00C853", 
+        tasks: ["Assemble chains", "Mount intake"],
+        resources: [{ label: "Pages 50-66", url: "#" }]
+    },
+	{ 
+        phase: 8,
+        title: "Testing 3", 
+        subtitle: "Box Fit",
+        desc: "Without power, test the mechanism with boxes.",
         color: "#FF3D00", 
+        tasks: ["Complete test"],
+        resources: [{ label: "None", url: "#" }]
+    },    { 
+        phase: 9,
+        title: "Stage 6", 
+        subtitle: "Finalize Assembly",
+        desc: "Final cable management, battery checks, and driver practice.",
+        color: "#00C853", 
         tasks: ["Cable management", "Final assembly"],
-        resources: [{ label: "Checklist", url: "#" }]
+        resources: [{ label: "Pages 66-71", url: "#" }]
     }
 ];
 

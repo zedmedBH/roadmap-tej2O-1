@@ -1,6 +1,5 @@
 export const checkpoints = [
     { 
-        phase: 1,
         title: "Build 1", 
         subtitle: "Holonomic Drive",
         desc: "Build chassis frame, install motors, and attach mecanum wheels.",
@@ -9,7 +8,6 @@ export const checkpoints = [
         resources: [{ label: "Pages 4-23", url: "#" }]
     },
     { 
-        phase: 2,
         title: "Planning", 
         subtitle: "Gantt Chart",
         desc: "Make a copy of the Gantt chart and assign tasks. Due April 1st.",
@@ -18,7 +16,6 @@ export const checkpoints = [
         resources: [{ label: "Video: Gantt Chart", url: "#" }]
     },
     { 
-        phase: 3,
         title: "Testing 1", 
         subtitle: "Drivetrain",
         desc: "Watch the videos for an introduction to various tests.",
@@ -27,7 +24,14 @@ export const checkpoints = [
         resources: [{ label: "Wiring Diagram", url: "#" }, { label: "Pairing Controller ", url: "#"}, { label: "Github Repo", url: "#"} ]
     },
     { 
-        phase: 4,
+        title: "Research", 
+        subtitle: "Compare Drivetrain Options",
+        desc: "Experiment with the code sample and research the pros and cons of different drivetrain types. Due April 9th.",
+        color: "#dfda48", 
+        tasks: ["Complete comparison in Criterion A: Engineering Journal"],
+        resources: [{ label: "Video: Gantt Chart", url: "#" }]
+    },
+    { 
         title: "Build 2", 
         subtitle: "Indexer & Tower Base",
         desc: "Assemble the lower motor gearbox and install the base of the conveyor tower.",
@@ -36,7 +40,6 @@ export const checkpoints = [
         resources: [{ label: "Pages 24-31", url: "#" }]
     },
     { 
-        phase: 5,
         title: "Testing 2", 
         subtitle: "Code motor limits",
         desc: "Modify code to incorporate new motor. Determine stopping limits.",
@@ -45,7 +48,6 @@ export const checkpoints = [
         resources: [{ label: "Video: Motor Limits", url: "#" }]
     },
     { 
-        phase: 6,
         title: "Build 3", 
         subtitle: "Top Lift Motor",
         desc: "Assemble chains for drivetrain. Install the top lift motor.",
@@ -54,7 +56,6 @@ export const checkpoints = [
         resources: [{ label: "Pages 32-49", url: "#" }]
     },
     { 
-        phase: 7,
         title: "Build 4", 
         subtitle: "Intake Arms & Paddles",
         desc: "Construct the fold-out intake arms and attach the intake flap chains.",
@@ -63,7 +64,6 @@ export const checkpoints = [
         resources: [{ label: "Pages 50-66", url: "#" }]
     },
     { 
-        phase: 8,
         title: "Testing 3", 
         subtitle: "Box Fit",
         desc: "Without power, test the mechanism with boxes.",
@@ -72,12 +72,20 @@ export const checkpoints = [
         resources: [{ label: "None", url: "#" }]
     },
     { 
-        phase: 9,
         title: "Build 5", 
         subtitle: "Finalize Assembly",
         desc: "Final cable management, battery checks, and driver practice. Deadline May 1st.",
         color: "#00C853", 
         tasks: ["Cable management", "Final assembly","Install tensioning rubber bands"],
+        resources: [{ label: "Pages 66-71", url: "#" }]
+    }
+    ,
+    { 
+        title: "Testing 4", 
+        subtitle: "Driver Practice",
+        desc: "Update code with any final tweaks and practice driving the robot.",
+        color: "#FF3D00", 
+        tasks: ["Update code", "Practice driving","Autonomous"],
         resources: [{ label: "Pages 66-71", url: "#" }]
     }
 ];

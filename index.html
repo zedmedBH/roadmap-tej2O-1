@@ -3,25 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VEX Stack Interactive Roadmap</title>
+    <title>VEX Stack Build Roadmap</title>
     <link rel="stylesheet" href="css/style.css">
-    <script src="scripts/roadmap.js" defer></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <div id="ui-layer">
-        <h1>VEX Stack Build Roadmap</h1>
-        <p class="subtitle">Click a checkpoint to view details.</p>
-    </div>
+    <header class="main-header">
+        <div class="header-content">
+            <h1>VEX Stack Build Roadmap</h1>
+            <p>Follow the checkpoints to complete the build. Click any card for resources.</p>
+        </div>
+    </header>
 
-    <div id="canvas-container">
-        <canvas id="roadmapCanvas"></canvas>
+    <main class="timeline-container">
+        <div class="timeline-line"></div>
         
-        <div id="popup">
-            <div class="close-btn">×</div>
-            <div id="popup-content"></div>
+        <div id="timeline-items"></div>
+    </main>
+
+    <div id="modal-overlay" class="hidden">
+        <div id="modal-card">
+            <button class="close-btn">&times;</button>
+            <div id="modal-content"></div>
         </div>
     </div>
 
+    <script src="scripts/roadmap.js" defer></script>
 </body>
 </html>

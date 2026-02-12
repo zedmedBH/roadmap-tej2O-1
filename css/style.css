@@ -1,179 +1,304 @@
 /* =========================================
-   1. GLOBAL RESET & LAYOUT
+   1. RESET & VARIABLES
    ========================================= */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+:root {
+    --bg-color: #f4f6f9;
+    --text-main: #2d3436;
+    --text-muted: #636e72;
+    --card-bg: #ffffff;
+    --line-color: #dfe6e9;
+    --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
+    --font-stack: 'Inter', sans-serif;
 }
 
-body, html {
-    width: 100%;
-    height: 100%;
-    overflow: hidden; /* Prevent scrolling, canvas handles view */
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    background-color: #ffffff; /* Clean white background like reference */
-    color: #333;
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background-color: var(--bg-color);
+    font-family: var(--font-stack);
+    color: var(--text-main);
+    line-height: 1.6;
+    overflow-x: hidden;
 }
 
 /* =========================================
-   2. UI OVERLAY (Title Area)
+   2. HEADER
    ========================================= */
-#ui-layer {
-    position: absolute;
-    top: 30px;
-    left: 40px;
-    z-index: 10;
-    pointer-events: none; /* Clicks pass through to canvas */
+.main-header {
+    text-align: center;
+    padding: 60px 20px 40px;
+    background: linear-gradient(135deg, #2d3436 0%, #000000 100%);
+    color: white;
+    margin-bottom: 40px;
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
 }
 
-h1 { 
-    color: #222; 
-    font-size: 32px; 
+.main-header h1 {
+    font-size: 2.5rem;
     font-weight: 800;
-    letter-spacing: -0.5px;
-    margin-bottom: 5px; 
+    margin-bottom: 10px;
 }
 
-p.subtitle { 
-    color: #666; 
-    font-size: 16px; 
-    font-weight: 500;
-}
-
-/* =========================================
-   3. CANVAS CONTAINER
-   ========================================= */
-#canvas-container {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-}
-
-canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-    /* reliable white background */
-    background-color: #ffffff; 
+.main-header p {
+    font-size: 1.1rem;
+    opacity: 0.8;
 }
 
 /* =========================================
-   4. POPUP CARD (Modal Style)
+   3. TIMELINE LAYOUT
    ========================================= */
-#popup {
-    position: absolute;
-    display: none;
-    width: 340px; /* Slightly wider for content */
-    background: #ffffff;
-    padding: 25px;
-    border-radius: 12px;
-    /* Soft, deep shadow to make it pop over the road */
-    box-shadow: 0 20px 40px rgba(0,0,0,0.15); 
-    
-    /* We use border-top for the color accent now, 
-       JS sets the actual color (borderColor) dynamically */
-    border-top: 6px solid #333; 
-    
-    z-index: 100;
-    pointer-events: auto; 
-    
-    /* Simple Fade In Animation */
-    animation: fadeIn 0.2s ease-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translate(-50%, -45%); }
-    to { opacity: 1; transform: translate(-50%, -50%); }
-}
-
-/* Typography inside Popup */
-#popup h3 { 
-    margin: 0 0 5px 0; 
-    font-size: 20px; 
-    color: #111; 
-    font-weight: 700;
-}
-
-#popup h4 {
-    margin: 15px 0 8px 0;
-    font-size: 13px;
-    text-transform: uppercase;
-    color: #888;
-    letter-spacing: 0.5px;
-}
-
-#popup p { 
-    margin: 0 0 15px 0; 
-    font-size: 14px; 
-    color: #555; 
-    line-height: 1.5; 
-}
-
-#popup hr {
-    border: 0;
-    height: 1px;
-    background: #eee;
-    margin: 15px 0;
-}
-
-/* Task List Styling */
-#popup ul {
-    list-style: none;
-    padding: 0;
-}
-
-#popup ul li {
+.timeline-container {
     position: relative;
-    padding-left: 20px;
-    margin-bottom: 8px;
-    font-size: 14px;
-    color: #444;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
-#popup ul li::before {
-    content: "•";
+/* The vertical road line */
+.timeline-line {
     position: absolute;
-    left: 0;
-    color: #ccc; /* Subtle bullet */
-    font-weight: bold;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    background: var(--line-color);
+    transform: translateX(-50%);
+    border-radius: 4px;
+    z-index: 1;
 }
 
-/* Resource Links (Pill Style) */
-.resource-link {
-    display: inline-flex;
+.timeline-item {
+    position: relative;
+    display: flex;
+    justify-content: center;
     align-items: center;
-    padding: 8px 14px;
-    background-color: #f5f7fa;
-    color: #007bff;
-    text-decoration: none;
-    border-radius: 20px;
-    font-size: 13px;
+    margin-bottom: 60px;
+    width: 100%;
+}
+
+/* The Marker (Circle Number) */
+.timeline-marker {
+    position: absolute;
+    left: 50%;
+    width: 50px;
+    height: 50px;
+    background: white;
+    border: 4px solid #333; /* Will be colored by JS */
+    border-radius: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: #333;
+    box-shadow: 0 0 0 6px var(--bg-color); /* fake gap between line and circle */
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.timeline-item:hover .timeline-marker {
+    transform: translateX(-50%) scale(1.2);
+}
+
+/* =========================================
+   4. TIMELINE CARDS
+   ========================================= */
+.timeline-card {
+    width: 42%; /* Leaves space for center line */
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 0;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    z-index: 10;
+    position: relative;
+    overflow: hidden;
+}
+
+.timeline-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.2);
+}
+
+/* Colored Header strip inside card */
+.card-header-strip {
+    height: 12px;
+    width: 100%;
+}
+
+.card-content {
+    padding: 24px;
+}
+
+.card-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    margin-bottom: 4px;
+    color: #222;
+}
+
+.card-subtitle {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
     font-weight: 600;
-    margin-right: 8px;
-    margin-bottom: 8px;
-    transition: all 0.2s ease;
+    margin-bottom: 12px;
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: #eee; /* Fallback */
+    color: #fff;
+    font-size: 0.75rem;
 }
 
-.resource-link:hover { 
-    background-color: #e2e6ea; 
-    color: #0056b3;
+.card-desc {
+    font-size: 0.95rem;
+    color: var(--text-muted);
 }
 
-.resources-wrapper {
-    margin-top: 15px;
+/* Alternating Sides */
+.timeline-item:nth-child(odd) {
+    justify-content: flex-start;
 }
 
-/* Close Button */
+.timeline-item:nth-child(even) {
+    justify-content: flex-end;
+}
+
+/* Connectors (The "Arms" connecting card to center) */
+.timeline-card::after {
+    content: '';
+    position: absolute;
+    top: 25px;
+    width: 0; 
+    height: 0; 
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent; 
+}
+
+/* Left side items */
+.timeline-item:nth-child(odd) .timeline-card {
+    margin-right: auto;
+}
+.timeline-item:nth-child(odd) .timeline-card::after {
+    right: -10px;
+    border-left: 10px solid white;
+}
+
+/* Right side items */
+.timeline-item:nth-child(even) .timeline-card {
+    margin-left: auto;
+}
+.timeline-item:nth-child(even) .timeline-card::after {
+    left: -10px;
+    border-right: 10px solid white;
+}
+
+/* =========================================
+   5. RESPONSIVE (MOBILE)
+   ========================================= */
+@media (max-width: 768px) {
+    .timeline-line {
+        left: 30px; /* Move line to left */
+    }
+    
+    .timeline-marker {
+        left: 30px; /* Align marker to left line */
+    }
+    
+    .timeline-item {
+        justify-content: flex-end !important; /* Always push card right */
+        padding-left: 70px; /* Make room for line */
+    }
+    
+    .timeline-card {
+        width: 100%;
+    }
+    
+    .timeline-card::after {
+        left: -10px !important;
+        right: auto !important;
+        border-right: 10px solid white !important;
+        border-left: none !important;
+    }
+
+    .main-header h1 { font-size: 1.8rem; }
+}
+
+/* =========================================
+   6. MODAL
+   ========================================= */
+#modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+#modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#modal-card {
+    background: white;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 20px;
+    padding: 30px;
+    position: relative;
+    transform: translateY(20px);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#modal-overlay.active #modal-card {
+    transform: translateY(0);
+}
+
 .close-btn {
     position: absolute;
-    top: 10px;
-    right: 15px;
+    top: 15px;
+    right: 20px;
+    font-size: 2rem;
+    background: none;
+    border: none;
     cursor: pointer;
-    font-size: 24px;
-    color: #ccc;
-    line-height: 1;
-    transition: color 0.2s;
+    color: #999;
 }
 
 .close-btn:hover { color: #333; }
+
+/* Modal Content Styling */
+.modal-header h2 { font-size: 1.5rem; margin-bottom: 5px; }
+.modal-meta { font-size: 0.9rem; color: #666; margin-bottom: 20px; display: block;}
+.task-list { list-style: none; margin: 20px 0; }
+.task-list li { 
+    padding: 10px 0; border-bottom: 1px solid #eee; display: flex; align-items: center; 
+}
+.task-list li::before {
+    content: "✓";
+    margin-right: 10px; color: green; font-weight: bold;
+}
+.btn-resource {
+    display: inline-block;
+    padding: 10px 18px;
+    background: #eef2ff;
+    color: #4f46e5;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-top: 10px;
+    margin-right: 10px;
+    transition: background 0.2s;
+}
+.btn-resource:hover { background: #e0e7ff; }

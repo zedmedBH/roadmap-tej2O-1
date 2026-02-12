@@ -5,7 +5,7 @@
 const checkpoints = [
     { 
         phase: 1,
-        title: "Stage 1", 
+        title: "Build 1", 
         subtitle: "Holonomic Drive",
         desc: "Build chassis frame, install motors, and attach mecanum wheels.",
         color: "#00C853", 
@@ -16,7 +16,7 @@ const checkpoints = [
         phase: 2,
         title: "Planning", 
         subtitle: "Gantt Chart",
-        desc: "Make a copy of the Gantt chart and assign tasks. Deadline May 1st.",
+        desc: "Make a copy of the Gantt chart and assign tasks. Due April 1st.",
         color: "#7269be", 
         tasks: ["Complete Gantt Chart","Add link to Engineering Journal"],
         resources: [{ label: "Video: Gantt Chart", url: "#" }]
@@ -32,9 +32,9 @@ const checkpoints = [
     },
     { 
         phase: 4,
-        title: "Stage 3", 
-        subtitle: "Support Motor",
-        desc: "Assemble and install the support motor mechanism.",
+        title: "Build 2", 
+        subtitle: "Indexer & Tower Base",
+        desc: "Assemble the lower motor gearbox and install the base of the conveyor tower.",
         color: "#00C853", 
         tasks: ["Build mechanism","Install"],
         resources: [{ label: "Pages 24-31", url: "#" }]
@@ -50,18 +50,18 @@ const checkpoints = [
     },
     { 
         phase: 6,
-        title: "Stage 4", 
+        title: "Build 3", 
         subtitle: "Top Lift Motor",
-        desc: "Assemble intake chains for drivetrain. Install the top lift motor.",
+        desc: "Assemble chains for drivetrain. Install the top lift motor.",
         color: "#00C853", 
         tasks: ["Assemble drivetrain chains", "Mount top lift motor"],
         resources: [{ label: "Pages 32-49", url: "#" }]
     },
     { 
         phase: 7,
-        title: "Stage 5", 
-        subtitle: "Lift Assembly",
-        desc: "Construct lift arms and ensure symmetric height movement.",
+        title: "Build 4", 
+        subtitle: "Intake Arms & Paddles",
+        desc: "Construct the fold-out intake arms and attach the intake flap chains.",
         color: "#00C853", 
         tasks: ["Assemble chains", "Mount intake"],
         resources: [{ label: "Pages 50-66", url: "#" }]
@@ -77,11 +77,11 @@ const checkpoints = [
     },
     { 
         phase: 9,
-        title: "Stage 6", 
+        title: "Build 5", 
         subtitle: "Finalize Assembly",
-        desc: "Final cable management, battery checks, and driver practice.",
+        desc: "Final cable management, battery checks, and driver practice. Deadline May 1st.",
         color: "#00C853", 
-        tasks: ["Cable management", "Final assembly"],
+        tasks: ["Cable management", "Final assembly","Install tensioning rubber bands"],
         resources: [{ label: "Pages 66-71", url: "#" }]
     }
 ];

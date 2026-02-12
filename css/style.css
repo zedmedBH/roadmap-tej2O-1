@@ -1,4 +1,6 @@
-/* Reset default browser spacing */
+/* =========================================
+   1. GLOBAL RESET & LAYOUT
+   ========================================= */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -8,28 +10,40 @@
 body, html {
     width: 100%;
     height: 100%;
-    overflow: hidden; /* Prevent scrolling, everything fits in view */
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f0f2f5;
+    overflow: hidden; /* Prevent scrolling, canvas handles view */
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: #ffffff; /* Clean white background like reference */
+    color: #333;
 }
 
-/* UI Layer - Floats above canvas */
+/* =========================================
+   2. UI OVERLAY (Title Area)
+   ========================================= */
 #ui-layer {
     position: absolute;
-    top: 20px;
-    left: 20px;
-    z-index: 10; /* Above canvas */
-    pointer-events: none; /* Let clicks pass through to the canvas */
-    background: rgba(255, 255, 255, 0.8);
-    padding: 10px 20px;
-    border-radius: 8px;
-    backdrop-filter: blur(5px);
+    top: 30px;
+    left: 40px;
+    z-index: 10;
+    pointer-events: none; /* Clicks pass through to canvas */
 }
 
-h1 { color: #333; font-size: 24px; margin-bottom: 5px; }
-p.subtitle { color: #666; font-size: 14px; }
+h1 { 
+    color: #222; 
+    font-size: 32px; 
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 5px; 
+}
 
-/* Container is now full screen */
+p.subtitle { 
+    color: #666; 
+    font-size: 16px; 
+    font-weight: 500;
+}
+
+/* =========================================
+   3. CANVAS CONTAINER
+   ========================================= */
 #canvas-container {
     position: relative;
     width: 100vw;
@@ -40,80 +54,126 @@ canvas {
     display: block;
     width: 100%;
     height: 100%;
-    /* Subtle grid pattern background */
-    background-color: #ffffff;
-    background-image: radial-gradient(#ccc 1px, transparent 1px);
-    background-size: 20px 20px;
+    /* reliable white background */
+    background-color: #ffffff; 
 }
 
-/* Popup Card */
+/* =========================================
+   4. POPUP CARD (Modal Style)
+   ========================================= */
 #popup {
     position: absolute;
     display: none;
-    width: 280px;
+    width: 340px; /* Slightly wider for content */
     background: #ffffff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    border-left: 6px solid #333;
+    padding: 25px;
+    border-radius: 12px;
+    /* Soft, deep shadow to make it pop over the road */
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15); 
+    
+    /* We use border-top for the color accent now, 
+       JS sets the actual color (borderColor) dynamically */
+    border-top: 6px solid #333; 
+    
     z-index: 100;
     pointer-events: auto; 
+    
+    /* Simple Fade In Animation */
+    animation: fadeIn 0.2s ease-out;
 }
 
-/* Arrow Logic (Simplified for full screen usage) */
-#popup::after {
-    content: "";
-    position: absolute;
-    /* We will manipulate this in JS if needed, or keep generic */
-    display: none; 
+@keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, -45%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
 }
 
-#popup h3 { margin: 0 0 8px 0; font-size: 18px; color: #222; }
-#popup p { margin: 0 0 12px 0; font-size: 14px; color: #555; line-height: 1.4; }
-#popup .meta { font-size: 11px; color: #888; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+/* Typography inside Popup */
+#popup h3 { 
+    margin: 0 0 5px 0; 
+    font-size: 20px; 
+    color: #111; 
+    font-weight: 700;
+}
 
-.action-btn {
-    display: inline-block;
-    padding: 8px 16px;
-    background-color: #007bff;
-    color: white;
-    text-decoration: none;
-    border-radius: 4px;
+#popup h4 {
+    margin: 15px 0 8px 0;
     font-size: 13px;
+    text-transform: uppercase;
+    color: #888;
+    letter-spacing: 0.5px;
+}
+
+#popup p { 
+    margin: 0 0 15px 0; 
+    font-size: 14px; 
+    color: #555; 
+    line-height: 1.5; 
+}
+
+#popup hr {
+    border: 0;
+    height: 1px;
+    background: #eee;
+    margin: 15px 0;
+}
+
+/* Task List Styling */
+#popup ul {
+    list-style: none;
+    padding: 0;
+}
+
+#popup ul li {
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #444;
+}
+
+#popup ul li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #ccc; /* Subtle bullet */
     font-weight: bold;
 }
-.action-btn:hover { background-color: #0056b3; }
 
+/* Resource Links (Pill Style) */
+.resource-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 14px;
+    background-color: #f5f7fa;
+    color: #007bff;
+    text-decoration: none;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+}
+
+.resource-link:hover { 
+    background-color: #e2e6ea; 
+    color: #0056b3;
+}
+
+.resources-wrapper {
+    margin-top: 15px;
+}
+
+/* Close Button */
 .close-btn {
     position: absolute;
-    top: 5px;
-    right: 10px;
+    top: 10px;
+    right: 15px;
     cursor: pointer;
-    font-size: 20px;
-    color: #999;
+    font-size: 24px;
+    color: #ccc;
+    line-height: 1;
+    transition: color 0.2s;
 }
+
 .close-btn:hover { color: #333; }
-
-/* --- Add this to the bottom of style.css --- */
-
-/* Base Arrow Styling */
-#popup::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    border-style: solid;
-    display: block; /* Ensure it renders */
-}
-
-#popup.arrow-bottom::after {
-    top: 100%; 
-    border-width: 10px 10px 0 10px; /* Top filled, others transparent */
-    border-color: #fff transparent transparent transparent;
-}
-
-#popup.arrow-top::after {
-    bottom: 100%;
-    border-width: 0 10px 10px 10px; /* Bottom filled, others transparent */
-    border-color: transparent transparent #fff transparent;
-}

@@ -1,106 +1,77 @@
 // ==========================================
-// 1. DATA CONFIGURATION
+// 1. DATA & THEME CONFIGURATION
 // ==========================================
+
+// Centralized visual styles for the Canvas
+const THEME = {
+    road: {
+        outerColor: '#e0e0e0',
+        innerColor: '#444444',
+        dashColor: '#ffffff',
+        widthOuter: 60,
+        widthInner: 44
+    },
+    card: {
+        width: 180,
+        height: 200,
+        radius: 20,
+        shadow: 'rgba(0,0,0,0.15)'
+    },
+    font: {
+        cardTitle: "bold 16px Arial",
+        cardDesc: "13px Arial",
+        nodeNum: "bold 20px Arial",
+        nodeNumHover: "bold 24px Arial"
+    }
+};
+
 const checkpoints = [
     { 
         phase: 1,
-        title: "Holonomic Drivetrain", 
-        pages: "Pages 4–22", 
-        imgSrc: "../img/phase1.png", // Expects image here
+        title: "Stage 1", 
+        subtitle: "Holonomic Drive",
+        desc: "Build chassis frame, install motors, and attach mecanum wheels.",
         color: "#00C853", 
-        tasks: [
-            "Build chassis frame",
-            "Install 4 motors",
-            "Attach mecanum wheels"
-        ],
-        qc: "Check wheel 'X' pattern & frame squareness.",
-        challenge: "Drive Test: Program basic forward/backward movement.",
-        resources: [
-            { label: "VEX V5 Motor Setup", url: "#" },
-            { label: "Drivetrain Coding Guide", url: "#" }
-        ]
+        tasks: ["Build chassis frame", "Install 4 motors", "Attach mecanum wheels"],
+        resources: [{ label: "Drivetrain Guide", url: "#" }]
     },
     { 
         phase: 2,
-        title: "Towers & Electronics", 
-        pages: "Pages 23–31", 
-        imgSrc: "../img/phase2.png",
-        color: "#FF3D00", 
-        tasks: [
-            "Build vertical towers",
-            "Mount V5 Brain"
-        ],
-        qc: "Ensure towers are parallel & Brain is accessible.",
-        challenge: "Systems Check: Verify motor ports on Brain screen.",
-        resources: [
-            { label: "Brain Wiring Diagram", url: "#" }
-        ]
+        title: "Stage 2", 
+        subtitle: "Electronics",
+        desc: "Mount V5 Brain, battery clips, and ensure wiring is managed.",
+        color: "#00C853", 
+        tasks: ["Mount V5 Brain", "Wire motors"],
+        resources: [{ label: "Wiring Diagram", url: "#" }]
     },
     { 
         phase: 3,
-        title: "Lift Assembly", 
-        pages: "Pages 32–49", 
-        imgSrc: "../img/phase3.png",
-        color: "#2962FF", 
-        tasks: [
-            "Build lift arms",
-            "Install lift motors"
-        ],
-        qc: "Check for friction/binding & symmetric height.",
-        challenge: "Lift Limits: Code lift to specific heights (e.g., 'Low', 'High').",
-        resources: [
-            { label: "PID Control Basics", url: "#" }
-        ]
+        title: "Stage 3", 
+        subtitle: "Lift Assembly",
+        desc: "Construct lift arms and ensure symmetric height movement.",
+        color: "#FF3D00", 
+        tasks: ["Build lift arms", "Install lift motors"],
+        resources: [{ label: "PID Control", url: "#" }]
     },
     { 
         phase: 4,
-        title: "Intake Mechanism", 
-        pages: "Pages 50–65", 
-        imgSrc: "../img/phase4.png",
+        title: "Stage 4", 
+        subtitle: "Intake Mech",
+        desc: "Assemble intake chains and mount motors for object collection.",
         color: "#FF3D00", 
-        tasks: [
-            "Assemble intake chains",
-            "Mount intake motors"
-        ],
-        qc: "Check chain tension & flap clearance.",
-        challenge: "Intake/Outtake: Map intake spin to controller buttons.",
-        resources: [
-            { label: "Chain Tension Guide", url: "#" }
-        ]
+        tasks: ["Assemble chains", "Mount intake"],
+        resources: [{ label: "Tension Guide", url: "#" }]
     },
     { 
         phase: 5,
-        title: "Final Integration", 
-        pages: "Pages 66–71", 
-        imgSrc: "../img/phase5.png",
-        color: "#00C853", 
-        tasks: [
-            "Cable management",
-            "Final assembly"
-        ],
-        qc: "\"Pinch\" test cables & secure battery.",
-        challenge: "Driver Control: Map all functions to controller for full drive.",
-        resources: [
-            { label: "Competition Checklist", url: "#" }
-        ]
+        title: "Stage 5", 
+        subtitle: "Integration",
+        desc: "Final cable management, battery checks, and driver practice.",
+        color: "#FF3D00", 
+        tasks: ["Cable management", "Final assembly"],
+        resources: [{ label: "Checklist", url: "#" }]
     }
 ];
-
-// -- PRELOAD IMAGES --
-// This ensures images are ready before we try to draw them on canvas
-checkpoints.forEach(cp => {
-    cp.imgObj = new Image();
-    cp.imgObj.src = cp.imgSrc;
-    cp.imgLoaded = false;
-
-    cp.imgObj.onload = () => {
-        cp.imgLoaded = true;
-        drawRoadmap(); // Redraw once image is ready
-    };
-    cp.imgObj.onerror = () => {
-        cp.imgLoaded = false; // Flag to use fallback
-    };
-});
 
 // ==========================================
 // 2. SETUP & STATE
@@ -122,7 +93,7 @@ let hoveredIndex = -1;
 function resizeAndDraw() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    isMobile = canvas.width < canvas.height;
+    isMobile = canvas.width < 768;
     drawRoadmap();
 }
 
@@ -130,60 +101,84 @@ function drawRoadmap() {
     const width = canvas.width;
     const height = canvas.height;
     
-    const padding = isMobile ? 100 : 150; 
-    const amplitude = isMobile ? width / 3.5 : height / 5; 
+    // Config for the wave
+    const padding = isMobile ? 60 : 150; 
+    const amplitude = isMobile ? 80 : 120; 
     
     ctx.clearRect(0, 0, width, height);
 
-    // -- CALCULATE PATH --
+    // -- CALCULATE PATH POINTS --
     const points = [];
-    const steps = 200;
+    const steps = 300; 
 
     for (let i = 0; i <= steps; i++) {
         const t = i / steps;
-        let x, y;
-
-        if (isMobile) {
-            const startY = padding;
-            const endY = height - padding;
-            y = startY + t * (endY - startY);
-            x = (width / 2) + Math.sin(t * Math.PI * 3) * amplitude;
-        } else {
-            const startX = padding;
-            const endX = width - padding;
-            x = startX + t * (endX - startX);
-            y = (height / 2) + Math.sin(t * Math.PI * 3) * amplitude;
-        }
+        // Sine wave formula
+        const startX = padding;
+        const endX = width - padding;
+        const x = startX + t * (endX - startX);
+        const y = (height / 2) + Math.sin(t * Math.PI * (checkpoints.length - 1)) * amplitude;
+        
         points.push({x, y});
     }
 
-    // 1. Draw Casing
-    ctx.beginPath();
-    ctx.lineWidth = isMobile ? 42 : 54; 
-    ctx.strokeStyle = '#e0e0e0'; 
+    // 1. Draw Decor (Corners)
+    drawCornerDecors(width, height);
+
+    // 2. Draw Cards (Behind road)
+    calculateNodePositions(width, height, padding, amplitude);
+    nodePositions.forEach((node, index) => {
+        drawCard(node, index);
+    });
+
+    // 3. Draw Road
     ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    drawPath(points);
-    ctx.stroke();
-
-    // 2. Draw Road
+    
+    // Outer Border
     ctx.beginPath();
-    ctx.lineWidth = isMobile ? 30 : 40;
-    ctx.strokeStyle = '#444'; 
+    ctx.lineWidth = THEME.road.widthOuter; 
+    ctx.strokeStyle = THEME.road.outerColor; 
     drawPath(points);
     ctx.stroke();
 
-    // 3. Draw Center Dashes
+    // Inner Asphalt
+    ctx.beginPath();
+    ctx.lineWidth = THEME.road.widthInner;
+    ctx.strokeStyle = THEME.road.innerColor; 
+    drawPath(points);
+    ctx.stroke();
+
+    // Center Dashes
     ctx.beginPath();
     ctx.lineWidth = 2;
-    ctx.strokeStyle = '#fff';
-    ctx.setLineDash([12, 12]);
+    ctx.strokeStyle = THEME.road.dashColor;
+    ctx.setLineDash([10, 15]);
     drawPath(points);
     ctx.stroke();
     ctx.setLineDash([]); 
 
-    // -- DRAW NODES --
-    drawNodes(width, height, padding, amplitude);
+    // 4. Draw Nodes (Top layer)
+    nodePositions.forEach((node, index) => {
+        drawNode(node, index);
+    });
+}
+
+function calculateNodePositions(width, height, padding, amplitude) {
+    nodePositions = []; 
+    const totalPoints = checkpoints.length;
+
+    checkpoints.forEach((point, index) => {
+        const t = index / (totalPoints - 1);
+        const startX = padding;
+        const endX = width - padding;
+        const x = startX + t * (endX - startX);
+        const y = (height / 2) + Math.sin(t * Math.PI * (totalPoints - 1)) * amplitude;
+
+        const isHovered = (index === hoveredIndex);
+        const radius = isHovered ? 28 : 22; 
+
+        nodePositions.push({ x, y, data: point, radius: radius });
+    });
 }
 
 function drawPath(points) {
@@ -194,106 +189,137 @@ function drawPath(points) {
     }
 }
 
-function drawNodes(width, height, padding, amplitude) {
-    nodePositions = []; 
-    const totalPoints = checkpoints.length;
+function drawCard(node, index) {
+    const isUp = (index % 2 !== 0); 
+    const { width, height, radius, shadow } = THEME.card;
+    const stemLength = 60;
+    
+    const x = node.x - (width / 2);
+    let y = isUp ? (node.y - stemLength - height) : (node.y + stemLength);
 
-    checkpoints.forEach((point, index) => {
-        const t = index / (totalPoints - 1);
-        let x, y;
+    // 1. Draw Shadow & Card Shape
+    ctx.save();
+    ctx.shadowColor = shadow;
+    ctx.shadowBlur = 15;
+    ctx.shadowOffsetY = 5;
 
-        if (isMobile) {
-            const startY = padding;
-            const endY = height - padding;
-            y = startY + t * (endY - startY);
-            x = (width / 2) + Math.sin(t * Math.PI * 3) * amplitude;
+    ctx.fillStyle = node.data.color;
+    ctx.beginPath();
+    ctx.roundRect(x, y, width, height, radius);
+    ctx.fill();
+    ctx.restore();
+
+    // 2. Draw Connector Stem
+    ctx.beginPath();
+    ctx.lineWidth = 40; 
+    ctx.strokeStyle = node.data.color;
+    
+    if (isUp) {
+        ctx.moveTo(node.x, y + height - 10);
+        ctx.lineTo(node.x, node.y);
+    } else {
+        ctx.moveTo(node.x, y + 10);
+        ctx.lineTo(node.x, node.y);
+    }
+    ctx.stroke();
+
+    // 3. Draw Text Content
+    ctx.fillStyle = "#fff";
+    
+    // --- FIX: Explicitly reset text alignment settings ---
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic"; // Resets the "middle" setting from drawNode
+    // ----------------------------------------------------
+
+    // Title
+    ctx.font = THEME.font.cardTitle;
+    ctx.fillText(node.data.title, x + 20, y + 35);
+    
+    // Divider Line
+    ctx.beginPath();
+    ctx.strokeStyle = "rgba(255,255,255,0.3)";
+    ctx.lineWidth = 1;
+    ctx.moveTo(x + 20, y + 50);
+    ctx.lineTo(x + width - 20, y + 50);
+    ctx.stroke();
+
+    // Description
+    ctx.font = THEME.font.cardDesc;
+    wrapText(ctx, node.data.desc, x + 20, y + 75, width - 40, 18);
+}
+
+function drawNode(node, index) {
+    const isHovered = (index === hoveredIndex);
+
+    // Node layers
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, node.radius + 5, 0, Math.PI * 2);
+    ctx.fillStyle = "#fff";
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, node.radius + 5, 0, Math.PI * 2);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#e0e0e0";
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+    ctx.fillStyle = "#fff";
+    ctx.fill();
+
+    // Number
+    ctx.fillStyle = node.data.color; 
+    ctx.font = isHovered ? THEME.font.nodeNumHover : THEME.font.nodeNum;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(index + 1, node.x, node.y + 2);
+}
+
+function drawCornerDecors(w, h) {
+    const size = 150;
+    
+    // Top Left (Green)
+    ctx.save();
+    ctx.translate(0, 0);
+    ctx.fillStyle = "#00C853";
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(size, 0);
+    ctx.lineTo(0, size);
+    ctx.fill();
+    ctx.restore();
+
+    // Top Right (Red)
+    ctx.save();
+    ctx.translate(w, 0);
+    ctx.scale(-1, 1); 
+    ctx.fillStyle = "#FF3D00";
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(size, 0);
+    ctx.lineTo(0, size);
+    ctx.fill();
+    ctx.restore();
+}
+
+function wrapText(context, text, x, y, maxWidth, lineHeight) {
+    var words = text.split(' ');
+    var line = '';
+
+    for(var n = 0; n < words.length; n++) {
+        var testLine = line + words[n] + ' ';
+        var metrics = context.measureText(testLine);
+        var testWidth = metrics.width;
+        if (testWidth > maxWidth && n > 0) {
+            context.fillText(line, x, y);
+            line = words[n] + ' ';
+            y += lineHeight;
         } else {
-            const startX = padding;
-            const endX = width - padding;
-            x = startX + t * (endX - startX);
-            y = (height / 2) + Math.sin(t * Math.PI * 3) * amplitude;
+            line = testLine;
         }
-
-        const isHovered = (index === hoveredIndex);
-        const radius = isHovered ? 32 : 25; 
-
-        nodePositions.push({ x, y, data: point, radius: radius });
-
-        // -- DRAW SHADOW --
-        ctx.beginPath();
-        ctx.arc(x, y + 4, radius, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0,0,0,0.2)';
-        ctx.fill();
-
-        // -- HOVER GLOW --
-        if (isHovered) {
-            ctx.shadowColor = 'white';
-            ctx.shadowBlur = 20;
-        } else {
-            ctx.shadowBlur = 0;
-        }
-
-        // -- DRAW CIRCLE CONTENT --
-        ctx.beginPath();
-        ctx.arc(x, y, radius, 0, Math.PI * 2);
-        
-        // CHECK: Do we have a loaded image?
-        if (point.imgLoaded) {
-            ctx.save();
-            ctx.clip(); // Clip everything to the circle we just defined
-            // Draw image centered in circle
-            ctx.drawImage(point.imgObj, x - radius, y - radius, radius * 2, radius * 2);
-            ctx.restore();
-        } else {
-            // FALLBACK: Draw solid color + Number
-            ctx.fillStyle = point.color;
-            ctx.fill();
-            
-            // Number Text
-            ctx.shadowBlur = 0; // Clear shadow for text
-            ctx.fillStyle = 'white';
-            ctx.font = isHovered ? 'bold 18px Arial' : 'bold 16px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(index + 1, x, y);
-        }
-        
-        ctx.shadowBlur = 0; // Reset shadow
-
-        // White Border (Always draw this so the image has a rim)
-        ctx.beginPath();
-        ctx.arc(x, y, radius, 0, Math.PI * 2);
-        ctx.lineWidth = isHovered ? 4 : 2; 
-        ctx.strokeStyle = 'white';
-        ctx.stroke();
-
-        // -- LABELS --
-        ctx.font = 'bold 13px Arial';
-        
-        if (isMobile) {
-            ctx.textAlign = 'left';
-            const textX = x + (isHovered ? 45 : 35); 
-            
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-            ctx.strokeText(point.title, textX, y);
-            
-            ctx.fillStyle = '#333';
-            ctx.fillText(point.title, textX, y);
-        } else {
-            ctx.textAlign = 'center';
-            const baseOffset = (index % 2 === 0) ? 60 : -60;
-            const hoverOffset = (index % 2 === 0) ? 10 : -10;
-            const finalOffset = isHovered ? baseOffset + hoverOffset : baseOffset;
-
-            ctx.lineWidth = 4;
-            ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-            ctx.strokeText(point.title, x, y + finalOffset);
-
-            ctx.fillStyle = '#333';
-            ctx.fillText(point.title, x, y + finalOffset);
-        }
-    });
+    }
+    context.fillText(line, x, y);
 }
 
 // ==========================================
@@ -301,15 +327,13 @@ function drawNodes(width, height, padding, amplitude) {
 // ==========================================
 
 function closePopup() {
-    popup.style.display = 'none';
+    if(popup) popup.style.display = 'none';
 }
-
 if (closeBtn) closeBtn.addEventListener('click', closePopup);
 
 canvas.addEventListener('click', (e) => {
     if (hoveredIndex !== -1) {
-        const node = nodePositions[hoveredIndex];
-        showPopup(node);
+        showPopup(nodePositions[hoveredIndex]);
     } else {
         closePopup();
     }
@@ -324,7 +348,7 @@ canvas.addEventListener('mousemove', (e) => {
 
     nodePositions.forEach((node, index) => {
         const dist = Math.sqrt((mouseX - node.x) ** 2 + (mouseY - node.y) ** 2);
-        if (dist < 35) { 
+        if (dist < 40) { 
             newHoverIndex = index;
         }
     });
@@ -337,70 +361,31 @@ canvas.addEventListener('mousemove', (e) => {
 });
 
 function showPopup(node) {
-    // Generate Task List
     const taskList = node.data.tasks.map(task => `<li>${task}</li>`).join('');
-    
-    // Generate Resource Links
     const resourceList = node.data.resources.map(res => 
-        `<a href="${res.url}" class="resource-link" target="_blank">📄 ${res.label}</a>`
+        `<a href="${res.url}" class="resource-link" target="_blank">${res.label}</a>`
     ).join('');
 
+    // CLEAN HTML: No inline styles
     popupContent.innerHTML = `
-        <div class="meta">${node.data.pages}</div>
-        <h3>${node.data.title}</h3>
-        
-        <div class="popup-section">
-            <h4>Key Tasks</h4>
-            <ul>${taskList}</ul>
-        </div>
-
-        <div class="popup-section qc-section">
-            <strong>QC Check:</strong> ${node.data.qc}
-        </div>
-
-        <div class="popup-section code-section">
-            <h4>💻 Coding Challenge</h4>
-            <p>${node.data.challenge}</p>
-        </div>
-
-        <div class="popup-section resources-section">
-            <h4>Resources</h4>
-            <div class="resource-grid">
-                ${resourceList}
-            </div>
+        <h3>${node.data.title}: ${node.data.subtitle}</h3>
+        <p>${node.data.desc}</p>
+        <hr/>
+        <h4>Tasks</h4>
+        <ul>${taskList}</ul>
+        <div class="resources-wrapper">
+            ${resourceList}
         </div>
     `;
     
-    popup.style.borderLeftColor = node.data.color;
-
-    const pWidth = 320; // Increased width slightly for new content
-    const verticalGap = 45; 
-
-    let left = node.x - (pWidth / 2);
-    let top;
-
-    popup.classList.remove('arrow-top', 'arrow-bottom');
-
-    // Dynamic Positioning
-    if (node.y < window.innerHeight / 2) {
-        top = node.y + verticalGap;
-        popup.classList.add('arrow-top'); 
-    } else {
-        // Popups might be taller now, push it up further
-        top = node.y - 400; // Adjusted for estimated taller height
-        // Safety check to keep it on screen
-        if(top < 20) top = 20; 
-        popup.classList.add('arrow-bottom'); 
-    }
-
-    if (left < 20) left = 20;
-    if (left + pWidth > window.innerWidth - 20) left = window.innerWidth - pWidth - 20;
-
-    // Apply Styles
-    popup.style.width = pWidth + 'px';
-    popup.style.left = left + 'px';
-    popup.style.top = top + 'px';
+    // Dynamic Layout (Must remain in JS)
+    popup.style.left = '50%';
+    popup.style.top = '50%';
+    popup.style.transform = 'translate(-50%, -50%)';
     popup.style.display = 'block';
+    
+    // Data-driven Color (Must remain in JS)
+    popup.style.borderTopColor = node.data.color;
 }
 
 window.addEventListener('resize', resizeAndDraw);

@@ -48,6 +48,31 @@ initAuth(async (user, dbUser) => {
     document.getElementById('nav-user-name').textContent = user.displayName;
     document.getElementById('nav-user-photo').src = user.photoURL;
 
+    // MOBILE MENU LOGIC
+    const mobileBtn = document.getElementById('mobile-menu-toggle');
+    const navControls = document.getElementById('nav-controls');
+
+    if (mobileBtn) {
+        mobileBtn.addEventListener('click', () => {
+            // Toggle the menu visibility
+            navControls.classList.toggle('active');
+            // Toggle the 'X' animation on the button
+            mobileBtn.classList.toggle('open');
+        });
+    }
+
+    // Close mobile menu when a user clicks a dropdown item or button
+    navControls.addEventListener('click', (e) => {
+        // Only close if we are actually on mobile (check if hamburger is visible)
+        if (window.getComputedStyle(mobileBtn).display !== 'none') {
+            // Don't close if they just clicked the select box itself (to avoid frustration)
+            if (e.target.tagName !== 'SELECT') {
+                navControls.classList.remove('active');
+                mobileBtn.classList.remove('open');
+            }
+        }
+    });
+
     // --- CHECK ROLE ---
     const teacherEmails = ["your.email@school.edu", "teacher@test.com"]; 
     isTeacher = dbUser.role === 'teacher' || teacherEmails.includes(user.email);

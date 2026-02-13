@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VEX Stack Build Roadmap</title>
+    <title>VEX Stack Team Manager</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,26 +11,110 @@
 </head>
 <body>
 
+    <div id="login-overlay">
+        <div class="login-card">
+            <h1>VEX Team Hub</h1>
+            <p>Sign in to access your team's roadmap.</p>
+            <button id="google-login-btn">Sign in with Google</button>
+        </div>
+    </div>
+
+    <nav class="app-nav hidden" id="app-nav">
+        <div class="user-info">
+            <img id="nav-user-photo" src="" alt="User">
+            <div>
+                <span id="nav-user-name">Loading...</span>
+                <span id="nav-team-name" class="badge">No Team</span>
+            </div>
+        </div>
+        <div class="nav-controls">
+            <button id="admin-btn" class="hidden">Teacher Admin</button>
+            <button id="logout-btn">Sign Out</button>
+        </div>
+    </nav>
+
+    <div id="admin-dashboard" class="dashboard-panel hidden">
+        <div class="panel-header">
+            <h2>Teacher Control Panel</h2>
+            <button id="close-admin">Close</button>
+        </div>
+        
+        <div class="admin-grid">
+            <div class="admin-section">
+                <h3>Create New Team</h3>
+                <div class="input-group">
+                    <input type="text" id="new-team-name" placeholder="Team Name (e.g., Team Alpha)">
+                    <button id="create-team-btn">Create</button>
+                </div>
+                <h3>Existing Teams</h3>
+                <ul id="admin-team-list" class="interactive-list"></ul>
+            </div>
+
+            <div class="admin-section" id="team-detail-panel">
+                <h3>Manage Members</h3>
+                <p class="hint">Select a team on the left to add students.</p>
+                <div id="member-management-area" class="hidden">
+                    <h4 id="selected-team-title"></h4>
+                    <div class="input-group">
+                        <input type="email" id="new-student-email" placeholder="student@school.edu">
+                        <button id="add-student-btn">Add Student</button>
+                    </div>
+                    <ul id="team-member-list" class="interactive-list"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <header class="main-header">
         <div class="header-content">
-            <h1>VEX Stack Build Roadmap</h1>
-            <p>Follow the checkpoints to complete the build. Click any card for resources.</p>
+            <h1>VEX Build Roadmap</h1>
+            <p>Track progress, assign tasks, and manage your deadline.</p>
         </div>
     </header>
 
     <main class="timeline-container">
         <div class="timeline-line"></div>
-        
         <div id="timeline-items"></div>
     </main>
 
     <div id="modal-overlay" class="hidden">
         <div id="modal-card">
             <button class="close-btn">&times;</button>
+            
             <div id="modal-content"></div>
+            
+            <div id="modal-actions" class="modal-actions">
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+                <h3>Team Assignment</h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Assign To:</label>
+                        <select id="task-assignee">
+                            <option value="">Unassigned</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Target Date:</label>
+                        <input type="date" id="task-duedate">
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 20px;">
+                        <label>Status:</label>
+                        <select id="task-status">
+                            <option value="Not Started">Not Started</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Blocked">Blocked</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                </div>
+                
+                <button id="save-task-btn" class="btn-primary">Save Progress</button>
+            </div>
         </div>
     </div>
 
-    <script type="module" src="scripts/roadmap.js" defer></script>
+    <script type="module" src="scripts/app.js"></script>
 </body>
 </html>

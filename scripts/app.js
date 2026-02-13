@@ -141,64 +141,80 @@ function renderTimeline() {
 async function openModal(task) {
     activeTask = task;
     const progress = teamProgress[task.id] || {};
+    const assignments = progress.taskAssignments || {}; // Load existing assignments
 
-    // 1. Fill Content
-    const taskList = task.tasks ? task.tasks.map(t => `<li>${t}</li>`).join('') : '';
+    // 1. Load Team Members FIRST (so we can build the dropdowns)
+    let memberOptions = '<option value="">Unassigned</option>';
+    let isReadOnly = true;
+
+    if (currentTeamId) {
+        try {
+            const members = await getTeamMembers(currentTeamId);
+            if (members.length > 0) isReadOnly = false;
+            
+            // Create the <option> list once to reuse for every task
+            memberOptions += members.map(m => 
+                `<option value="${m.uid}">${m.email.split('@')[0]}</option>`
+            ).join('');
+        } catch (err) {
+            console.error("Error loading members:", err);
+        }
+    }
+
+    // 2. Build the Task List with Dropdowns
+    // We map over the strings in checkpoints.js and create a row for each
+    const taskRows = task.tasks ? task.tasks.map(taskName => {
+        const assignedUid = assignments[taskName] || ""; // Get saved UID for this specific task
+        
+        // Inject the 'selected' attribute into the correct option
+        const currentOptions = memberOptions.replace(
+            `value="${assignedUid}"`, 
+            `value="${assignedUid}" selected`
+        );
+
+        return `
+            <li class="task-row">
+                <span class="task-name">${taskName}</span>
+                <select class="task-select" data-task-name="${taskName}" ${isReadOnly ? 'disabled' : ''}>
+                    ${currentOptions}
+                </select>
+            </li>
+        `;
+    }).join('') : '<li>No sub-tasks defined</li>';
+
     const resourceList = task.resources ? task.resources.map(r => 
         `<a href="${r.url}" class="btn-resource" target="_blank">${r.label}</a>`
     ).join('') : 'None';
 
+    // 3. Inject HTML
     modalContent.innerHTML = `
         <div class="modal-header">
             <h2 style="color: ${task.color}">${task.title}</h2>
             <span class="modal-meta">${task.subtitle}</span>
         </div>
         <p>${task.desc}</p>
-        <ul class="task-list">${taskList}</ul>
+        
+        <div style="margin: 20px 0;">
+            <strong>Task List & Assignments:</strong>
+            <ul class="task-list">
+                ${taskRows}
+            </ul>
+        </div>
+
         <div class="modal-resources"><strong>Resources:</strong><br/>${resourceList}</div>
     `;
 
-    // 2. Fill Form Data
+    // 4. Fill Shared Form Data (Date & Status)
     dateInput.value = progress.dueDate || '';
     statusSelect.value = progress.status || 'Not Started';
     
-    // 3. Load Team Members (Dynamic Dropdown)
-    if (currentTeamId) {
-        assigneeSelect.innerHTML = '<option value="">Unassigned</option>';
-        assigneeSelect.disabled = true; // Disable while loading
-        
-        try {
-            const members = await getTeamMembers(currentTeamId);
-            assigneeSelect.disabled = false;
-            
-            members.forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = m.uid;
-                opt.textContent = m.email.split('@')[0];
-                if (progress.assignee === m.uid) opt.selected = true;
-                assigneeSelect.appendChild(opt);
-            });
+    // Disable controls if read-only (no team)
+    dateInput.disabled = isReadOnly;
+    statusSelect.disabled = isReadOnly;
+    saveBtn.style.display = isReadOnly ? 'none' : 'block';
 
-            // Enable inputs
-            dateInput.disabled = false;
-            statusSelect.disabled = false;
-            saveBtn.style.display = 'block';
-        } catch (err) {
-            console.error("Error loading members:", err);
-            assigneeSelect.innerHTML = '<option>Error loading team</option>';
-        }
-    } else {
-        // Read-only Mode
-        assigneeSelect.innerHTML = '<option>No Team Assigned</option>';
-        assigneeSelect.disabled = true;
-        dateInput.disabled = true;
-        statusSelect.disabled = true;
-        saveBtn.style.display = 'none';
-    }
-
-    // --- VISIBILITY FIX ---
+    // 5. Show Modal
     modalOverlay.classList.remove('hidden');
-    // Small delay to allow browser to render "block" before applying opacity transition
     setTimeout(() => {
         modalOverlay.classList.add('active');
     }, 10);
@@ -229,24 +245,31 @@ saveBtn.addEventListener('click', async () => {
 
     saveBtn.textContent = "Saving...";
     saveBtn.disabled = true;
-    
-    const assigneeId = assigneeSelect.value;
-    const assigneeName = assigneeSelect.options[assigneeSelect.selectedIndex].text;
 
+    // 1. Scrape all the individual task assignments
+    const taskSelects = document.querySelectorAll('.task-select');
+    const newAssignments = {};
+    
+    taskSelects.forEach(select => {
+        const taskName = select.getAttribute('data-task-name');
+        const uid = select.value;
+        if (uid) newAssignments[taskName] = uid;
+    });
+
+    // 2. Prepare Data Object
     const data = {
-        assignee: assigneeId,
-        assigneeName: assigneeId ? assigneeName : null,
         dueDate: dateInput.value,
-        status: statusSelect.value
+        status: statusSelect.value,
+        taskAssignments: newAssignments, // Save the map of { "Task Name": "UID" }
+        lastUpdated: new Date()
     };
 
     try {
         await saveTaskProgress(currentTeamId, activeTask.id, data);
         teamProgress[activeTask.id] = data; // Update local state
-        renderTimeline(); // Re-render to show badges
+        renderTimeline(); // Re-render main view
         
         saveBtn.textContent = "Saved!";
-        
         setTimeout(() => {
             closeModal();
         }, 500);
@@ -254,6 +277,6 @@ saveBtn.addEventListener('click', async () => {
     } catch (err) {
         console.error("Save failed:", err);
         saveBtn.textContent = "Error";
-        alert("Failed to save. Check console.");
+        alert("Failed to save.");
     }
 });

@@ -1,6 +1,11 @@
 /* =========================================
    1. RESET & VARIABLES
    ========================================= */
+
+.hidden {
+    display: none !important;
+}
+
 :root {
     --bg-color: #f4f6f9;
     --text-main: #2d3436;
@@ -380,3 +385,33 @@ body {
 .status-Completed { background: #d4edda; color: #155724; }
 .status-InProgress { background: #fff3cd; color: #856404; }
 .status-Blocked { background: #f8d7da; color: #721c24; }
+
+.task-list {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+}
+
+.task-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+    gap: 15px;
+}
+
+.task-name {
+    flex: 1;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.task-select {
+    width: 130px;
+    padding: 4px;
+    font-size: 0.85rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+}

@@ -1,4 +1,4 @@
-import { createTeam, getAllTeams, addStudentToTeam, getTeamMembers } from './db.js';
+import { createTeam, getAllTeams, addStudentToTeam, getTeamMembers, removeStudentFromTeam } from './db.js';
 
 export function initAdminDashboard() {
     console.log("Admin Dashboard Initialized"); // Debug log
@@ -48,10 +48,41 @@ export function initAdminDashboard() {
         memberListEl.innerHTML = '<li>Loading members...</li>';
         const members = await getTeamMembers(teamId);
         
+        // Clear the list
+        memberListEl.innerHTML = '';
+
         if (!members || members.length === 0) {
             memberListEl.innerHTML = '<li>No members yet.</li>';
         } else {
-            memberListEl.innerHTML = members.map(m => `<li>${m.email}</li>`).join('');
+            // Create a list item for each member
+            members.forEach(member => {
+                const li = document.createElement('li');
+                
+                // HTML: Email + Remove Button
+                li.innerHTML = `
+                    <span>${member.email}</span>
+                    <button class="remove-member-btn">Remove</button>
+                `;
+
+                // Add Click Listener for Removal
+                const btn = li.querySelector('.remove-member-btn');
+                btn.onclick = async (e) => {
+                    e.stopPropagation(); // Stop click from bubbling
+                    
+                    if(confirm(`Are you sure you want to remove ${member.email}?`)) {
+                        btn.textContent = "Removing...";
+                        try {
+                            await removeStudentFromTeam(teamId, member);
+                            refreshMembers(teamId); // Reload list
+                        } catch (err) {
+                            alert("Error removing member: " + err.message);
+                            btn.textContent = "Remove";
+                        }
+                    }
+                };
+
+                memberListEl.appendChild(li);
+            });
         }
     }
 

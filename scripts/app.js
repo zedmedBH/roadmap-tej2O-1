@@ -3,7 +3,7 @@ import { initAuth } from './auth.js';
 import { initAdminDashboard } from './admin.js';
 import { 
     seedMasterTasks, getMasterTasks, getTeamProgress, 
-    getTeamMembers, saveTaskProgress
+    getTeamMembers, saveTaskProgress, getAllTeams
 } from './db.js';
 
 // ==========================================
@@ -13,6 +13,7 @@ let currentUser = null;
 let currentTeamId = null;
 let currentTasks = [];
 let teamProgress = {};
+let isTeacher = false; // NEW: Track role globally
 
 // UI References
 const loginOverlay = document.getElementById('login-overlay');
@@ -20,17 +21,18 @@ const appNav = document.getElementById('app-nav');
 const adminBtn = document.getElementById('admin-btn');
 const adminDash = document.getElementById('admin-dashboard');
 const container = document.getElementById('timeline-items');
+const viewTeamSelect = document.getElementById('view-team-select');
+const teamBadge = document.getElementById('nav-team-name'); // Ref for easier updates
 
 // Modal References
 const modalOverlay = document.getElementById('modal-overlay');
 const modalContent = document.getElementById('modal-content');
-const assigneeSelect = document.getElementById('task-assignee');
 const dateInput = document.getElementById('task-duedate');
 const statusSelect = document.getElementById('task-status');
 const saveBtn = document.getElementById('save-task-btn');
 const closeBtn = document.querySelector('.close-btn');
 
-let activeTask = null; // Stores the task currently open in the modal
+let activeTask = null;
 
 // ==========================================
 // 2. INITIALIZATION & LOGIN
@@ -46,35 +48,87 @@ initAuth(async (user, dbUser) => {
     document.getElementById('nav-user-name').textContent = user.displayName;
     document.getElementById('nav-user-photo').src = user.photoURL;
 
-    // --- CHECK FOR TEACHER ROLE ---
-    // REPLACE THIS with your actual email to test Admin features
+    // --- CHECK ROLE ---
     const teacherEmails = ["your.email@school.edu", "teacher@test.com"]; 
-    
-    if (dbUser.role === 'teacher' || teacherEmails.includes(user.email)) {
+    isTeacher = dbUser.role === 'teacher' || teacherEmails.includes(user.email);
+
+    if (isTeacher) {
         console.log("Teacher Access Granted");
         adminBtn.classList.remove('hidden');
-        
-        // Open Admin Dashboard
+        viewTeamSelect.classList.remove('hidden');
+
+        // 1. Setup Admin Dashboard
         adminBtn.onclick = () => {
             adminDash.classList.remove('hidden');
-            initAdminDashboard(); 
+            initAdminDashboard(async (teamId, teamName) => {
+                viewTeamSelect.value = teamId;
+                viewTeamSelect.dispatchEvent(new Event('change'));
+                adminDash.classList.add('hidden');
+            });
         };
+        document.getElementById('close-admin').onclick = () => adminDash.classList.add('hidden');
 
-        // Close Admin Dashboard
-        document.getElementById('close-admin').onclick = () => {
-            adminDash.classList.add('hidden');
-        };
+        // 2. Populate Dropdown
+        const allTeams = await getAllTeams();
+        allTeams.forEach(team => {
+            const opt = document.createElement('option');
+            opt.value = team.id;
+            opt.textContent = `View: ${team.name}`;
+            viewTeamSelect.appendChild(opt);
+        });
+
+        // 3. Dropdown Change Listener
+        viewTeamSelect.addEventListener('change', async (e) => {
+            const selectedId = e.target.value;
+
+            if (selectedId) {
+                // VIEWING A TEAM
+                currentTeamId = selectedId;
+                teamProgress = await getTeamProgress(selectedId);
+                
+                const teamName = e.target.options[e.target.selectedIndex].text.replace('View: ', '');
+                teamBadge.textContent = `Viewing: ${teamName}`;
+                teamBadge.style.backgroundColor = "#ff9f43"; // Orange (Spectator)
+            } else {
+                // RESET VIEW
+                currentTeamId = isTeacher ? null : dbUser.teamId; // Teachers go back to null
+                
+                if (isTeacher) {
+                    // Teacher Reset
+                    teamProgress = {}; 
+                    teamBadge.textContent = "Teacher";
+                    teamBadge.style.backgroundColor = "#2d3436"; // Dark Grey
+                } else {
+                    // Student Reset
+                    if(currentTeamId) {
+                        teamProgress = await getTeamProgress(currentTeamId);
+                        teamBadge.textContent = "Team Active";
+                        teamBadge.style.backgroundColor = "#6c5ce7"; // Purple
+                    } else {
+                        teamProgress = {};
+                        teamBadge.textContent = "No Team Assigned";
+                    }
+                }
+            }
+            renderTimeline();
+        });
     }
 
-    // --- DATA LOADING ---
-    await seedMasterTasks(checkpoints); // Ensure DB has tasks
+    // --- DATA LOADING & INITIAL LABEL ---
+    await seedMasterTasks(checkpoints);
     currentTasks = await getMasterTasks();
 
-    if (currentTeamId) {
+    if (isTeacher) {
+        // TEACHER DEFAULT STATE
+        teamBadge.textContent = "Teacher";
+        teamBadge.style.backgroundColor = "#2d3436"; 
+    } else if (currentTeamId) {
+        // STUDENT TEAM STATE
         teamProgress = await getTeamProgress(currentTeamId);
-        document.getElementById('nav-team-name').textContent = "Team Active";
+        teamBadge.textContent = "Team Active";
     } else {
-        document.getElementById('nav-team-name').textContent = "No Team Assigned";
+        // STUDENT NO-TEAM STATE
+        teamBadge.textContent = "No Team Assigned";
     }
 
     renderTimeline();
@@ -84,6 +138,8 @@ initAuth(async (user, dbUser) => {
     loginOverlay.style.display = 'flex';
     appNav.classList.add('hidden');
     adminBtn.classList.add('hidden');
+    viewTeamSelect.classList.add('hidden');
+    isTeacher = false;
 });
 
 // ==========================================
@@ -98,7 +154,6 @@ function renderTimeline() {
     }
 
     currentTasks.forEach((point, index) => {
-        // Get Progress
         const progress = teamProgress[point.id] || {};
         const status = progress.status || 'Not Started';
         const statusClass = status.replace(/\s+/g, ''); 
@@ -120,14 +175,11 @@ function renderTimeline() {
                     <h3 class="card-title">${point.title}</h3>
                     <p class="card-desc">${point.desc}</p>
                     ${progress.dueDate ? `<div style="margin-top:10px; font-size:0.8rem; color:#666;">📅 Due: ${progress.dueDate}</div>` : ''}
-                    ${progress.assigneeName ? `<div style="font-size:0.8rem; color:#666;">👤 ${progress.assigneeName}</div>` : ''}
                 </div>
             </div>
         `;
 
-        // Direct Click Listener
-        const card = item.querySelector('.timeline-card');
-        card.addEventListener('click', () => {
+        item.querySelector('.timeline-card').addEventListener('click', () => {
             openModal(point);
         });
         
@@ -136,23 +188,22 @@ function renderTimeline() {
 }
 
 // ==========================================
-// 4. MODAL LOGIC (THE FIX)
+// 4. MODAL LOGIC (Granular Assignments)
 // ==========================================
 async function openModal(task) {
     activeTask = task;
     const progress = teamProgress[task.id] || {};
-    const assignments = progress.taskAssignments || {}; // Load existing assignments
+    const assignments = progress.taskAssignments || {};
 
-    // 1. Load Team Members FIRST (so we can build the dropdowns)
     let memberOptions = '<option value="">Unassigned</option>';
     let isReadOnly = true;
 
+    // Load Members if a team is active (or viewing a team)
     if (currentTeamId) {
         try {
             const members = await getTeamMembers(currentTeamId);
             if (members.length > 0) isReadOnly = false;
             
-            // Create the <option> list once to reuse for every task
             memberOptions += members.map(m => 
                 `<option value="${m.uid}">${m.email.split('@')[0]}</option>`
             ).join('');
@@ -161,12 +212,9 @@ async function openModal(task) {
         }
     }
 
-    // 2. Build the Task List with Dropdowns
-    // We map over the strings in checkpoints.js and create a row for each
+    // Build Task Rows
     const taskRows = task.tasks ? task.tasks.map(taskName => {
-        const assignedUid = assignments[taskName] || ""; // Get saved UID for this specific task
-        
-        // Inject the 'selected' attribute into the correct option
+        const assignedUid = assignments[taskName] || "";
         const currentOptions = memberOptions.replace(
             `value="${assignedUid}"`, 
             `value="${assignedUid}" selected`
@@ -186,7 +234,6 @@ async function openModal(task) {
         `<a href="${r.url}" class="btn-resource" target="_blank">${r.label}</a>`
     ).join('') : 'None';
 
-    // 3. Inject HTML
     modalContent.innerHTML = `
         <div class="modal-header">
             <h2 style="color: ${task.color}">${task.title}</h2>
@@ -204,35 +251,27 @@ async function openModal(task) {
         <div class="modal-resources"><strong>Resources:</strong><br/>${resourceList}</div>
     `;
 
-    // 4. Fill Shared Form Data (Date & Status)
     dateInput.value = progress.dueDate || '';
     statusSelect.value = progress.status || 'Not Started';
     
-    // Disable controls if read-only (no team)
     dateInput.disabled = isReadOnly;
     statusSelect.disabled = isReadOnly;
     saveBtn.style.display = isReadOnly ? 'none' : 'block';
 
-    // 5. Show Modal
     modalOverlay.classList.remove('hidden');
-    setTimeout(() => {
-        modalOverlay.classList.add('active');
-    }, 10);
+    setTimeout(() => modalOverlay.classList.add('active'), 10);
 }
 
 // ==========================================
 // 5. CLOSE & SAVE LOGIC
 // ==========================================
-
 function closeModal() {
-    modalOverlay.classList.remove('active'); // Fade out
-    
+    modalOverlay.classList.remove('active');
     setTimeout(() => {
-        modalOverlay.classList.add('hidden'); // Hide after fade
-        // Reset button state
+        modalOverlay.classList.add('hidden');
         saveBtn.textContent = "Save Progress";
         saveBtn.disabled = false;
-    }, 300); // Matches CSS transition time
+    }, 300);
 }
 
 closeBtn.addEventListener('click', closeModal);
@@ -246,7 +285,6 @@ saveBtn.addEventListener('click', async () => {
     saveBtn.textContent = "Saving...";
     saveBtn.disabled = true;
 
-    // 1. Scrape all the individual task assignments
     const taskSelects = document.querySelectorAll('.task-select');
     const newAssignments = {};
     
@@ -256,23 +294,20 @@ saveBtn.addEventListener('click', async () => {
         if (uid) newAssignments[taskName] = uid;
     });
 
-    // 2. Prepare Data Object
     const data = {
         dueDate: dateInput.value,
         status: statusSelect.value,
-        taskAssignments: newAssignments, // Save the map of { "Task Name": "UID" }
+        taskAssignments: newAssignments,
         lastUpdated: new Date()
     };
 
     try {
         await saveTaskProgress(currentTeamId, activeTask.id, data);
-        teamProgress[activeTask.id] = data; // Update local state
-        renderTimeline(); // Re-render main view
+        teamProgress[activeTask.id] = data; 
+        renderTimeline(); 
         
         saveBtn.textContent = "Saved!";
-        setTimeout(() => {
-            closeModal();
-        }, 500);
+        setTimeout(() => closeModal(), 500);
         
     } catch (err) {
         console.error("Save failed:", err);

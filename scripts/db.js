@@ -2,7 +2,7 @@
 import { db } from './firebase-config.js';
 import { 
     collection, doc, getDoc, getDocs, setDoc, addDoc, 
-    query, where, updateDoc, arrayUnion 
+    query, where, updateDoc, arrayUnion, arrayRemove
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- TASKS (Checkpoints) ---
@@ -124,4 +124,18 @@ export async function getTeamProgress(teamId) {
         progress[data.taskId] = data;
     });
     return progress;
+}
+
+export async function removeStudentFromTeam(teamId, memberObject) {
+    // A. Remove the specific object {email, uid} from the Team's array
+    const teamRef = doc(db, "teams", teamId);
+    await updateDoc(teamRef, {
+        members: arrayRemove(memberObject)
+    });
+
+    // B. Reset the Student's profile (set teamId to null)
+    const userRef = doc(db, "users", memberObject.uid);
+    await updateDoc(userRef, {
+        teamId: null
+    });
 }

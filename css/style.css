@@ -415,3 +415,171 @@ body {
     border-radius: 4px;
     background-color: #f9f9f9;
 }
+
+.nav-dropdown {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-right: 10px;
+    font-size: 0.9rem;
+    background-color: #f8f9fa;
+    cursor: pointer;
+}
+.nav-dropdown:hover {
+    background-color: #e9ecef;
+}
+
+/* Global Button Reset */
+button {
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+button:active {
+    transform: translateY(1px);
+    box-shadow: none;
+}
+
+/* --- Navigation Buttons --- */
+
+/* "Teacher Admin" - Purple Accent */
+#admin-btn {
+    background-color: #6c5ce7;
+    color: white;
+}
+#admin-btn:hover {
+    background-color: #5f4dd0;
+    box-shadow: 0 4px 10px rgba(108, 92, 231, 0.3);
+}
+
+/* "Sign Out" - Subtle Outline */
+#logout-btn {
+    background-color: white;
+    border: 1px solid #dfe6e9;
+    color: #636e72;
+    margin-left: 10px;
+}
+#logout-btn:hover {
+    border-color: #fab1a0;
+    color: #d63031; /* Red on hover */
+    background-color: #fff5f5;
+}
+
+/* --- Admin Panel Buttons --- */
+
+/* "Close" Button (Top left of Admin Panel) */
+#close-admin {
+    background-color: #2d3436;
+    color: white;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    margin-bottom: 15px;
+}
+#close-admin:hover {
+    background-color: #000;
+}
+
+/* "Create" & "Add Student" - Green Success Actions */
+#create-team-btn, #add-student-btn {
+    background-color: #00b894;
+    color: white;
+    margin-left: 10px;
+}
+#create-team-btn:hover, #add-student-btn:hover {
+    background-color: #00a884;
+    box-shadow: 0 4px 10px rgba(0, 184, 148, 0.3);
+}
+
+/* --- Input Fields & Dropdowns --- */
+
+input[type="text"], 
+input[type="email"], 
+input[type="date"], 
+select {
+    padding: 10px 12px;
+    border: 1px solid #dfe6e9;
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    color: #2d3436;
+    background: white;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+/* Focus State (Blue Glow) */
+input:focus, select:focus {
+    border-color: #6c5ce7;
+    box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+}
+
+#view-team-select {
+    /* 1. Turn off default browser arrow */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+
+    /* 2. Add Custom Arrow Icon */
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 12px;
+    background-color: white;
+
+    /* 3. Spacing & Borders */
+    padding: 8px 35px 8px 12px; /* Right padding creates space for the arrow */
+    border: 1px solid #dfe6e9;
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #2d3436;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
+}
+
+#view-team-select:hover {
+    background-color: #f8f9fa;
+    border-color: #b2bec3;
+}
+
+#view-team-select:focus {
+    outline: none;
+    border-color: #6c5ce7;
+    box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+}
+
+/* Remove Member Button (Small Red) */
+.remove-member-btn {
+    background-color: #fab1a0;
+    color: #d63031;
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-left: 10px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+}
+
+.remove-member-btn:hover {
+    background-color: #d63031;
+    color: white;
+}
+
+/* Fix List Layout for Members */
+#team-member-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #f1f2f6;
+}

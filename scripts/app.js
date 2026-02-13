@@ -194,11 +194,12 @@ async function openModal(task) {
     activeTask = task;
     const progress = teamProgress[task.id] || {};
     const assignments = progress.taskAssignments || {};
+    const completions = progress.taskCompletions || {}; // <--- NEW: Load completion status
 
     let memberOptions = '<option value="">Unassigned</option>';
     let isReadOnly = true;
 
-    // Load Members if a team is active (or viewing a team)
+    // Load Members
     if (currentTeamId) {
         try {
             const members = await getTeamMembers(currentTeamId);
@@ -212,9 +213,11 @@ async function openModal(task) {
         }
     }
 
-    // Build Task Rows
+    // Build Task Rows with Checkbox AND Dropdown
     const taskRows = task.tasks ? task.tasks.map(taskName => {
         const assignedUid = assignments[taskName] || "";
+        const isChecked = completions[taskName] ? "checked" : ""; // Check if completed
+        
         const currentOptions = memberOptions.replace(
             `value="${assignedUid}"`, 
             `value="${assignedUid}" selected`
@@ -222,7 +225,10 @@ async function openModal(task) {
 
         return `
             <li class="task-row">
+                <input type="checkbox" class="task-status-checkbox" data-task-name="${taskName}" ${isChecked} ${isReadOnly ? 'disabled' : ''}>
+                
                 <span class="task-name">${taskName}</span>
+                
                 <select class="task-select" data-task-name="${taskName}" ${isReadOnly ? 'disabled' : ''}>
                     ${currentOptions}
                 </select>
@@ -285,19 +291,28 @@ saveBtn.addEventListener('click', async () => {
     saveBtn.textContent = "Saving...";
     saveBtn.disabled = true;
 
+    // 1. Scrape Assignments
     const taskSelects = document.querySelectorAll('.task-select');
     const newAssignments = {};
-    
     taskSelects.forEach(select => {
         const taskName = select.getAttribute('data-task-name');
         const uid = select.value;
         if (uid) newAssignments[taskName] = uid;
     });
 
+    // 2. Scrape Completion Status (NEW)
+    const taskCheckboxes = document.querySelectorAll('.task-status-checkbox');
+    const newCompletions = {};
+    taskCheckboxes.forEach(box => {
+        const taskName = box.getAttribute('data-task-name');
+        newCompletions[taskName] = box.checked; // true or false
+    });
+
     const data = {
         dueDate: dateInput.value,
         status: statusSelect.value,
         taskAssignments: newAssignments,
+        taskCompletions: newCompletions, // Save the booleans
         lastUpdated: new Date()
     };
 

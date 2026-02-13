@@ -292,7 +292,8 @@ body {
     padding: 10px 0; border-bottom: 1px solid #eee; display: flex; align-items: center; 
 }
 .task-list li::before {
-    content: "✓";
+    content: none !important;
+    display: none !important;
     margin-right: 10px; color: green; font-weight: bold;
 }
 .btn-resource {
@@ -600,4 +601,52 @@ input:focus, select:focus {
     background-color: #d63031;
     color: white;
     border-color: #d63031;
+}
+
+/* =========================================
+   10. TASK STATUS TOGGLES
+   ========================================= */
+
+/* Hide the default browser checkbox */
+.task-status-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    margin-right: 15px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    flex-shrink: 0; /* Prevents squishing */
+}
+
+/* Checked State (Green Background) */
+.task-status-checkbox:checked {
+    background-color: #00C853; /* VEX Green */
+    border-color: #00C853;
+}
+
+/* Checkmark Icon (Hidden by default, shown when checked) */
+.task-status-checkbox:checked::after {
+    content: '✓';
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Hover Effect */
+.task-status-checkbox:hover {
+    border-color: #00C853;
+}
+
+/* Strikethrough for completed task text */
+.task-status-checkbox:checked + .task-name {
+    text-decoration: line-through;
+    color: #b2bec3;
 }

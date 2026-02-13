@@ -650,3 +650,50 @@ input:focus, select:focus {
     text-decoration: line-through;
     color: #b2bec3;
 }
+
+/* =========================================
+   12. SESSION ROLES (Build Cards)
+   ========================================= */
+
+.role-container {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.role-header {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: #636e72;
+    font-weight: 800;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.role-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two columns */
+    gap: 12px;
+}
+
+.role-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.role-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #2d3436;
+    margin-bottom: 4px;
+}
+
+.role-select {
+    padding: 6px;
+    border: 1px solid #dfe6e9;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    background: white;
+}

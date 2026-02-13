@@ -194,7 +194,8 @@ async function openModal(task) {
     activeTask = task;
     const progress = teamProgress[task.id] || {};
     const assignments = progress.taskAssignments || {};
-    const completions = progress.taskCompletions || {}; // <--- NEW: Load completion status
+    const completions = progress.taskCompletions || {};
+    const roles = progress.roles || {}; // <--- NEW: Load saved roles
 
     let memberOptions = '<option value="">Unassigned</option>';
     let isReadOnly = true;
@@ -213,10 +214,45 @@ async function openModal(task) {
         }
     }
 
-    // Build Task Rows with Checkbox AND Dropdown
+    // --- NEW: BUILD ROLE SECTION ---
+    // Only show this for tasks starting with "Build"
+    let roleSection = '';
+    if (task.title.startsWith("Build")) {
+        // Helper to generate a dropdown with the correct user selected
+        const createRoleSelect = (roleKey, label) => {
+            const savedUid = roles[roleKey] || "";
+            const options = memberOptions.replace(
+                `value="${savedUid}"`, 
+                `value="${savedUid}" selected`
+            );
+            return `
+                <div class="role-group">
+                    <label class="role-label">${label}</label>
+                    <select class="role-select" data-role="${roleKey}" ${isReadOnly ? 'disabled' : ''}>
+                        ${options}
+                    </select>
+                </div>
+            `;
+        };
+
+        roleSection = `
+            <div class="role-container">
+                <span class="role-header">Session Roles</span>
+                <div class="role-grid">
+                    ${createRoleSelect('leadBuilder', 'Lead Builder')}
+                    ${createRoleSelect('supportBuilder', 'Support Builder')}
+                    ${createRoleSelect('leadCutter', 'Lead Cutter')}
+                    ${createRoleSelect('supportCutter', 'Support Cutter')}
+                </div>
+            </div>
+        `;
+    }
+    // --------------------------------
+
+    // Build Task List (Same as before)
     const taskRows = task.tasks ? task.tasks.map(taskName => {
         const assignedUid = assignments[taskName] || "";
-        const isChecked = completions[taskName] ? "checked" : ""; // Check if completed
+        const isChecked = completions[taskName] ? "checked" : "";
         
         const currentOptions = memberOptions.replace(
             `value="${assignedUid}"`, 
@@ -226,9 +262,7 @@ async function openModal(task) {
         return `
             <li class="task-row">
                 <input type="checkbox" class="task-status-checkbox" data-task-name="${taskName}" ${isChecked} ${isReadOnly ? 'disabled' : ''}>
-                
                 <span class="task-name">${taskName}</span>
-                
                 <select class="task-select" data-task-name="${taskName}" ${isReadOnly ? 'disabled' : ''}>
                     ${currentOptions}
                 </select>
@@ -246,6 +280,8 @@ async function openModal(task) {
             <span class="modal-meta">${task.subtitle}</span>
         </div>
         <p>${task.desc}</p>
+        
+        ${roleSection}
         
         <div style="margin: 20px 0;">
             <strong>Task List & Assignments:</strong>
@@ -300,19 +336,29 @@ saveBtn.addEventListener('click', async () => {
         if (uid) newAssignments[taskName] = uid;
     });
 
-    // 2. Scrape Completion Status (NEW)
+    // 2. Scrape Completions
     const taskCheckboxes = document.querySelectorAll('.task-status-checkbox');
     const newCompletions = {};
     taskCheckboxes.forEach(box => {
         const taskName = box.getAttribute('data-task-name');
-        newCompletions[taskName] = box.checked; // true or false
+        newCompletions[taskName] = box.checked;
+    });
+
+    // 3. Scrape Roles (NEW)
+    const roleSelects = document.querySelectorAll('.role-select');
+    const newRoles = {};
+    roleSelects.forEach(select => {
+        const roleKey = select.getAttribute('data-role');
+        const uid = select.value;
+        if (uid) newRoles[roleKey] = uid;
     });
 
     const data = {
         dueDate: dateInput.value,
         status: statusSelect.value,
         taskAssignments: newAssignments,
-        taskCompletions: newCompletions, // Save the booleans
+        taskCompletions: newCompletions,
+        roles: newRoles, // Save the roles
         lastUpdated: new Date()
     };
 

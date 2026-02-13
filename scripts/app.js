@@ -195,15 +195,16 @@ async function openModal(task) {
     const progress = teamProgress[task.id] || {};
     const assignments = progress.taskAssignments || {};
     const completions = progress.taskCompletions || {};
-    const roles = progress.roles || {}; // <--- NEW: Load saved roles
+    const roles = progress.roles || {};
 
-    let memberOptions = '<option value="">Unassigned</option>';
+    let memberOptions = '<option value="" disabled selected>Add...</option>';
     let isReadOnly = true;
+    let members = [];
 
     // Load Members
     if (currentTeamId) {
         try {
-            const members = await getTeamMembers(currentTeamId);
+            members = await getTeamMembers(currentTeamId);
             if (members.length > 0) isReadOnly = false;
             
             memberOptions += members.map(m => 
@@ -214,27 +215,24 @@ async function openModal(task) {
         }
     }
 
-    // --- NEW: BUILD ROLE SECTION ---
-    // Only show this for tasks starting with "Build"
+    // --- BUILD ROLE SECTION (Keep existing) ---
     let roleSection = '';
     if (task.title.startsWith("Build")) {
-        // Helper to generate a dropdown with the correct user selected
         const createRoleSelect = (roleKey, label) => {
             const savedUid = roles[roleKey] || "";
-            const options = memberOptions.replace(
-                `value="${savedUid}"`, 
-                `value="${savedUid}" selected`
-            );
+            // Reuse the member options but remove the "Add..." default for a standard select
+            const roleOpts = memberOptions.replace('disabled selected>Add...', '>Unassigned')
+                .replace(`value="${savedUid}"`, `value="${savedUid}" selected`);
+                
             return `
                 <div class="role-group">
                     <label class="role-label">${label}</label>
                     <select class="role-select" data-role="${roleKey}" ${isReadOnly ? 'disabled' : ''}>
-                        ${options}
+                        ${roleOpts}
                     </select>
                 </div>
             `;
         };
-
         roleSection = `
             <div class="role-container">
                 <span class="role-header">Session Roles</span>
@@ -247,59 +245,148 @@ async function openModal(task) {
             </div>
         `;
     }
-    // --------------------------------
 
-    // Build Task List (Same as before)
+    // --- TASK LIST WITH MULTI-SELECT ---
     const taskRows = task.tasks ? task.tasks.map(taskName => {
-        const assignedUid = assignments[taskName] || "";
+        // Handle old data (string) vs new data (array)
+        let assignedUids = assignments[taskName] || [];
+        if (typeof assignedUids === 'string') assignedUids = [assignedUids];
+
         const isChecked = completions[taskName] ? "checked" : "";
         
-        const currentOptions = memberOptions.replace(
-            `value="${assignedUid}"`, 
-            `value="${assignedUid}" selected`
-        );
+        // Generate Tags
+        const tagsHtml = assignedUids.map(uid => {
+            const member = members.find(m => m.uid === uid);
+            const name = member ? member.email.split('@')[0] : "Unknown";
+            return `
+                <div class="assignee-tag" data-uid="${uid}">
+                    ${name}
+                    ${!isReadOnly ? '<span class="assignee-remove">&times;</span>' : ''}
+                </div>
+            `;
+        }).join('');
+
+        // The "+" Dropdown
+        // Note: We added 'style="color:transparent"' inline as a backup to CSS
+        const addDropdown = !isReadOnly ? `
+            <select class="add-assignee-select" data-task-name="${taskName}">
+                ${memberOptions}
+            </select>
+        ` : '';
 
         return `
             <li class="task-row">
                 <input type="checkbox" class="task-status-checkbox" data-task-name="${taskName}" ${isChecked} ${isReadOnly ? 'disabled' : ''}>
-                <span class="task-name">${taskName}</span>
-                <select class="task-select" data-task-name="${taskName}" ${isReadOnly ? 'disabled' : ''}>
-                    ${currentOptions}
-                </select>
+                
+                <div class="task-content-wrapper">
+                    <span class="task-name">${taskName}</span>
+                    
+                    <div class="assignee-container" id="container-${taskName.replace(/\s/g, '')}">
+                        ${tagsHtml}
+                        ${addDropdown}
+                    </div>
+                </div>
             </li>
         `;
     }).join('') : '<li>No sub-tasks defined</li>';
 
-    const resourceList = task.resources ? task.resources.map(r => 
-        `<a href="${r.url}" class="btn-resource" target="_blank">${r.label}</a>`
-    ).join('') : 'None';
+    // ... [Date & Resource Logic same as before] ...
+    // Calculate Calendar Link
+    const getCalDate = (dateStr) => {
+        if (!dateStr) return null;
+        const date = new Date(dateStr);
+        const nextDay = new Date(date);
+        nextDay.setDate(date.getDate() + 1);
+        const fmt = (d) => d.toISOString().replace(/-|:|\.\d\d\d/g, "").split("T")[0];
+        return `${fmt(date)}/${fmt(nextDay)}`;
+    };
+    const calDates = getCalDate(progress.dueDate);
+    const calTitle = encodeURIComponent(`Due: ${task.title} (${task.subtitle})`);
+    const calDesc = encodeURIComponent(`Task: ${task.desc}\n\nLink: ${window.location.href}`);
+    const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${calTitle}&details=${calDesc}&dates=${calDates}`;
 
+    // RENDER
     modalContent.innerHTML = `
         <div class="modal-header">
             <h2 style="color: ${task.color}">${task.title}</h2>
             <span class="modal-meta">${task.subtitle}</span>
         </div>
         <p>${task.desc}</p>
-        
         ${roleSection}
-        
         <div style="margin: 20px 0;">
             <strong>Task List & Assignments:</strong>
             <ul class="task-list">
                 ${taskRows}
             </ul>
         </div>
-
-        <div class="modal-resources"><strong>Resources:</strong><br/>${resourceList}</div>
+        <div class="modal-resources"><strong>Resources:</strong><br/>${task.resources ? task.resources.map(r => `<a href="${r.url}" class="btn-resource" target="_blank">${r.label}</a>`).join('') : 'None'}</div>
     `;
+
+    // --- INTERACTIVE EVENT LISTENERS (For Tags) ---
+    // We attach one big listener to the modal content for efficiency
+    modalContent.onclick = (e) => {
+        // Handle "Remove Tag" Click
+        if (e.target.classList.contains('assignee-remove')) {
+            e.target.closest('.assignee-tag').remove();
+        }
+    };
+
+    modalContent.onchange = (e) => {
+        // Handle "Add Assignee" Selection
+        if (e.target.classList.contains('add-assignee-select')) {
+            const select = e.target;
+            const uid = select.value;
+            const name = select.options[select.selectedIndex].text;
+            
+            // Check for duplicates in this specific container
+            const container = select.parentNode;
+            const existing = container.querySelectorAll(`.assignee-tag[data-uid="${uid}"]`);
+            
+            if (existing.length === 0) {
+                // Create new tag HTML
+                const tag = document.createElement('div');
+                tag.className = 'assignee-tag';
+                tag.setAttribute('data-uid', uid);
+                tag.innerHTML = `${name} <span class="assignee-remove">&times;</span>`;
+                
+                // Insert before the dropdown
+                container.insertBefore(tag, select);
+            }
+            
+            // Reset dropdown
+            select.value = "";
+        }
+    };
+
+    // Form Controls
+    const dateContainer = document.getElementById('task-duedate').parentNode;
+    let calBtn = document.getElementById('add-to-cal-btn');
+    if (!calBtn) {
+        calBtn = document.createElement('a');
+        calBtn.id = 'add-to-cal-btn';
+        calBtn.className = 'btn-calendar';
+        calBtn.target = '_blank';
+        calBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM9 14H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2zm-8 4H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2z"/></svg>`;
+        dateContainer.style.display = 'flex'; 
+        dateContainer.style.gap = '5px';
+        dateContainer.appendChild(calBtn);
+    }
+
+    if (progress.dueDate) {
+        calBtn.href = calUrl;
+        calBtn.style.display = 'flex';
+        calBtn.title = "Add to Google Calendar";
+    } else {
+        calBtn.style.display = 'none';
+    }
 
     dateInput.value = progress.dueDate || '';
     statusSelect.value = progress.status || 'Not Started';
-    
     dateInput.disabled = isReadOnly;
     statusSelect.disabled = isReadOnly;
     saveBtn.style.display = isReadOnly ? 'none' : 'block';
 
+    // Show Modal
     modalOverlay.classList.remove('hidden');
     setTimeout(() => modalOverlay.classList.add('active'), 10);
 }
@@ -327,24 +414,29 @@ saveBtn.addEventListener('click', async () => {
     saveBtn.textContent = "Saving...";
     saveBtn.disabled = true;
 
-    // 1. Scrape Assignments
-    const taskSelects = document.querySelectorAll('.task-select');
-    const newAssignments = {};
-    taskSelects.forEach(select => {
-        const taskName = select.getAttribute('data-task-name');
-        const uid = select.value;
-        if (uid) newAssignments[taskName] = uid;
-    });
-
-    // 2. Scrape Completions
+    // 1. Scrape Multi-Select Assignments
+    // We iterate over the checkboxes to get the list of task names
     const taskCheckboxes = document.querySelectorAll('.task-status-checkbox');
+    const newAssignments = {};
     const newCompletions = {};
+
     taskCheckboxes.forEach(box => {
         const taskName = box.getAttribute('data-task-name');
+        
+        // Save Completion Status
         newCompletions[taskName] = box.checked;
+
+        // Find the container next to this box
+        const container = box.nextElementSibling.querySelector('.assignee-container');
+        if (container) {
+            // Collect all UIDs from tags
+            const tags = container.querySelectorAll('.assignee-tag');
+            const uids = Array.from(tags).map(t => t.getAttribute('data-uid'));
+            newAssignments[taskName] = uids; // Save as Array
+        }
     });
 
-    // 3. Scrape Roles (NEW)
+    // 2. Scrape Roles
     const roleSelects = document.querySelectorAll('.role-select');
     const newRoles = {};
     roleSelects.forEach(select => {
@@ -358,7 +450,7 @@ saveBtn.addEventListener('click', async () => {
         status: statusSelect.value,
         taskAssignments: newAssignments,
         taskCompletions: newCompletions,
-        roles: newRoles, // Save the roles
+        roles: newRoles,
         lastUpdated: new Date()
     };
 

@@ -2,7 +2,7 @@
 import { db } from './firebase-config.js';
 import { 
     collection, doc, getDoc, getDocs, setDoc, addDoc, 
-    query, where, updateDoc, arrayUnion, arrayRemove
+    query, where, updateDoc, arrayUnion, arrayRemove, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- TASKS (Checkpoints) ---
@@ -138,4 +138,19 @@ export async function removeStudentFromTeam(teamId, memberObject) {
     await updateDoc(userRef, {
         teamId: null
     });
+}
+
+export async function deleteTeam(teamId) {
+    // 1. Get all members of this team first
+    const members = await getTeamMembers(teamId);
+
+    // 2. Unassign all students (Set their teamId to null)
+    const unassignPromises = members.map(m => {
+        const userRef = doc(db, "users", m.uid);
+        return updateDoc(userRef, { teamId: null });
+    });
+    await Promise.all(unassignPromises);
+
+    // 3. Delete the Team Document
+    await deleteDoc(doc(db, "teams", teamId));
 }
